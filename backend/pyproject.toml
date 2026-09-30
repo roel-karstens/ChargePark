@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-fullstack-starter-backend"
+version = "0.1.0"
+description = "FastAPI backend for AI Full-Stack Starter"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "python-jose[cryptography]>=3.3.0",
+    "supabase>=2.0.0",
+    "sqlalchemy>=2.0",
+    "pyproject-toml>=0.0.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "httpx>=0.25.0",
+    "ruff>=0.1.0",
+    "pyright>=1.1.300",
+    "black>=23.10.0",
+]
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "--strict-markers"
+markers = [
+    "integration: integration tests",
+    "unit: unit tests",
+]
+
+[tool.pyright]
+include = ["app", "tests"]
+exclude = ["**/node_modules", "**/__pycache__"]
+typeCheckingMode = "strict"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "W",    # pycodestyle
+    "C901", # McCabe complexity
+]
+ignore = ["E501"]  # Line too long (handled by formatter)
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
