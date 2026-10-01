@@ -14,6 +14,29 @@ All schema changes go through numbered migrations in `supabase/migrations/`:
 0003_create_rls_policies.sql
 ```
 
+### Alternative: Auto-Migrations via Python (SQLAlchemy)
+
+For development/prototyping, this starter also supports auto-creating schema from Python models:
+
+**Pattern**: Tables defined in `backend/app/models/` are auto-created on backend startup.
+
+**When to use**:
+- ✅ Development/local testing (zero-friction setup)
+- ✅ Rapid prototyping with frequent schema changes
+- ✅ Demo/learning projects (like this starter)
+
+**When NOT to use**:
+- ❌ Production deployments (no versioning trail)
+- ❌ Multi-team environments (schema changes not tracked separately)
+- ❌ Complex migrations (need raw SQL control)
+
+**For production**, use Alembic to generate SQL migrations from models:
+```bash
+alembic revision --autogenerate -m "add tags table"
+```
+
+See [ADR-002](../../docs/decisions/ADR-002-auto-migrations-via-python.md) for trade-off analysis.
+
 ## Writing Migrations
 
 - Idempotent: Safe to run multiple times
