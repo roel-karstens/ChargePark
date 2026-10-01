@@ -129,7 +129,11 @@ git clone <repository>
 cd ai_fullstack_starter
 ```
 
-### 2. Frontend Setup
+### 2. Supabase Project Setup
+
+Create a new Supabase project at [supabase.com](https://supabase.com) and get your credentials from project settings.
+
+### 3. Frontend Setup
 
 ```bash
 cd frontend
@@ -169,19 +173,23 @@ SUPABASE_SERVICE_ROLE_KEY=xxx  # NEVER expose this
 
 1. Create a new Supabase project at [supabase.com](https://supabase.com)
 2. Get your URL and keys from the project settings
-3. Run migrations in Supabase SQL Editor or psql:
+3. (Optional) For production with PostgreSQL:
+   - Go to project settings → Database → Connection Pooler
+   - Select "Session mode"
+   - Copy the connection string and add to backend `.env`:
+     ```
+     DATABASE_URL=postgresql://user:password@aws-1-eu-west-1.pooler.supabase.com:5432/postgres
+     ```
 
-```sql
--- Copy the contents of supabase/migrations/0001_initial_schema.sql
--- and run in Supabase SQL Editor
-```
+**Database tables are created automatically on startup** — no manual migrations needed! 🎉
 
-### 5. Run Development Servers
+### 5. Run Development Servers (with Auto-Migration)
 
 **Backend** (from `backend/` directory):
 ```bash
-fastapi dev app/main.py
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 # Runs at http://localhost:8000
+# Automatically creates tables and RLS policies on startup!
 ```
 
 **Frontend** (from `frontend/` directory):
@@ -208,9 +216,27 @@ These are **public** (prefixed with `VITE_`) and safe to commit as `.env.example
 SUPABASE_URL=https://project.supabase.co
 SUPABASE_ANON_KEY=eyJhbGc...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
+ENVIRONMENT=development
+# Optional: PostgreSQL connection (auto-migration, production Supabase)
+# If set, backend uses PostgreSQL. Otherwise falls back to SQLite.
+DATABASE_URL=postgresql://user:password@host:5432/postgres
 ```
 
 The `.env` file is in `.gitignore` — **never commit it**.
+
+### Development Features
+
+**Dev Auth Mode** (Frontend only, requires `ENVIRONMENT=development` in backend):
+- Green "🚀 Development Mode" button on login page
+- Generates mock JWT tokens without Supabase rate limiting
+- Useful for testing authentication flows during development
+
+**Auto-Migration** (Backend on startup):
+- Creates database tables from SQLAlchemy models
+- Enables Row Level Security (RLS) on PostgreSQL
+- Configures policies for owner-based access control
+- Creates performance indexes
+- Works on first startup, idempotent on subsequent runs
 
 ## 🔐 Security
 
@@ -275,7 +301,7 @@ npm run build
 **Run dev server:**
 ```bash
 cd backend
-fastapi dev app/main.py
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **Lint and format:**
@@ -305,18 +331,22 @@ python -m pytest --cov=app tests/
 
 ### Database
 
-**Create a migration:**
-```bash
-# Create supabase/migrations/0002_your_migration.sql
-# Write SQL changes
-# Deploy via Supabase dashboard or psql
-```
+**Schema is managed automatically via SQLAlchemy models** — no manual SQL migrations for tables!
+
+To add new tables:
+1. Create a new model in `backend/app/models/`
+2. Import it in `backend/app/models/__init__.py`
+3. Restart the backend — it auto-creates the table on startup
+
+**For custom SQL operations** (indexes, triggers, etc.):
+1. Add SQL to `backend/app/main.py` in the RLS setup section
+2. Restart the backend
 
 **View schema:**
 ```bash
-# Supabase dashboard → SQL Editor
+# Supabase dashboard → Table Editor
 # or
-psql postgresql://user:password@db.supabase.co:5432/postgres
+psql postgresql://user:password@host:5432/postgres  # Using pooler connection
 ```
 
 ## 🧪 Testing
