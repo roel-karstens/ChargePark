@@ -15,6 +15,7 @@ const DEV_MODE = import.meta.env.MODE === 'development';
 
 export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
   const [token, setToken] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -22,24 +23,53 @@ export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
       try {
         if (DEV_MODE && localStorage.getItem('sb-dev-token')) {
           console.log('📝 Dev mode: requesting test token from backend...');
-          const response = await fetch('http://localhost:8000/api/v1/dev/token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: user.id }),
-          });
           
-          if (response.ok) {
-            const data = await response.json();
-            console.log('✅ Dev token retrieved:', data.token.substring(0, 20) + '...');
-            setToken(data.token);
-          } else {
-            console.error('Failed to get dev token');
+          // Add a timeout for the fetch
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          
+          try {
+            const response = await fetch('http://localhost:8000/api/v1/dev/token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: user.id }),
+              signal: controller.signal,
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+              const data = await response.json();
+              console.log('✅ Dev token retrieved:', data.token.substring(0, 20) + '...');
+              setToken(data.token);
+              setAuthError(null);
+            } else {
+              const errorText = await response.text();
+              console.error('Failed to get dev token:', response.status, errorText);
+              setAuthError(`Backend error: ${response.status}`);
+              // Fallback: create a temporary token for testing
+              const tempToken = 'dev-temp-' + Date.now();
+              setToken(tempToken);
+            }
+          } catch (fetchErr) {
+            clearTimeout(timeoutId);
+            if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+              console.error('Dev token request timed out');
+              setAuthError('Backend request timed out. Is the backend running on port 8000?');
+            } else {
+              console.error('Error fetching dev token:', fetchErr);
+              setAuthError(`Failed to connect to backend: ${fetchErr instanceof Error ? fetchErr.message : 'Unknown error'}`);
+            }
+            // Fallback: create a temporary token for testing
+            const tempToken = 'dev-temp-' + Date.now();
+            setToken(tempToken);
           }
         } else {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
             console.log('✅ Token retrieved from Supabase (initial):', session.access_token.substring(0, 20) + '...');
             setToken(session.access_token);
+            setAuthError(null);
           } else {
             console.log('📝 No initial session, listening for auth changes...');
             const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -47,6 +77,7 @@ export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
                 if (session?.access_token) {
                   console.log('✅ Token retrieved from Supabase:', session.access_token.substring(0, 20) + '...');
                   setToken(session.access_token);
+                  setAuthError(null);
                 }
               }
             );
@@ -58,6 +89,7 @@ export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
         }
       } catch (err) {
         console.error('Error getting token:', err);
+        setAuthError(err instanceof Error ? err.message : 'Authentication error');
       }
     };
 
@@ -121,7 +153,15 @@ export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
   if (!token) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="text-lg text-muted-foreground">Authenticating...</div>
+        <div className="text-center">
+          <div className="text-lg text-muted-foreground mb-4">Authenticating...</div>
+          {authError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 max-w-sm mx-auto">
+              <p className="text-sm text-red-800 mb-2">{authError}</p>
+              <p className="text-xs text-red-700">Make sure the backend is running: <code className="bg-red-100 px-1 py-0.5 rounded">python -m uvicorn app.main:app</code></p>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -134,6 +174,7 @@ export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
             <div>
               <h1 className="text-2xl font-bold text-foreground">Projects</h1>
               <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+              <p className="text-xs text-gray-500 mt-0.5 font-mono">ID: {user.id.substring(0, 8)}...</p>
             </div>
             <div className="flex items-center gap-3">
               {DEV_MODE && (
@@ -160,6 +201,14 @@ export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
             error={createMutation.error ? (createMutation.error as Error).message : undefined}
           />
         </div>
+
+        {authError && (
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 mb-6">
+            <p className="text-sm text-yellow-800 font-medium mb-2">⚠️ Authentication Warning</p>
+            <p className="text-sm text-yellow-700">{authError}</p>
+            <p className="text-xs text-yellow-700 mt-2">Dev Mode: Using temporary token for testing</p>
+          </div>
+        )}
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6">
