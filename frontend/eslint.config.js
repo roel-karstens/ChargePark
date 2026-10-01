@@ -1,6 +1,7 @@
 import globals from 'globals';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import typescript from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';
 
@@ -22,6 +23,7 @@ export default [
     plugins: {
       react,
       'react-hooks': reactHooks,
+      'jsx-a11y': jsxA11y,
       '@typescript-eslint': typescript,
     },
     rules: {
@@ -37,6 +39,12 @@ export default [
       // React Hooks rules
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+      
+      // Accessibility rules
+      'jsx-a11y/anchor-is-valid': 'warn',
+      'jsx-a11y/aria-role': 'warn',
+      'jsx-a11y/click-events-have-key-events': 'warn',
+      'jsx-a11y/no-static-element-interactions': 'warn',
       
       // TypeScript rules
       '@typescript-eslint/no-unused-vars': 'warn',

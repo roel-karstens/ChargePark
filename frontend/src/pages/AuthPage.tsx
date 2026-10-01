@@ -1,8 +1,14 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { supabase } from '../lib/supabase';
 
 interface AuthPageProps {
   onAuthSuccess: (user: { id: string; email: string }) => void;
+}
+
+interface AuthFormInputs {
+  email: string;
+  password: string;
 }
 
 const DEV_MODE = import.meta.env.MODE === 'development';
@@ -10,8 +16,12 @@ const DEV_USER_ID = '5b4b4ba2-ad71-44c8-8e6a-fee9313eee5c';
 const DEV_USER_EMAIL = 'dev@example.com';
 
 export function AuthPage({ onAuthSuccess }: AuthPageProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { register, handleSubmit, formState: { errors } } = useForm<AuthFormInputs>({
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,8 +31,6 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
     setError(null);
     
     try {
-      // In dev mode, we skip Supabase and use a test user
-      // Store a fake session with a test token
       const testToken = 'dev-test-token-' + DEV_USER_ID;
       localStorage.setItem('sb-dev-token', testToken);
       
@@ -37,28 +45,22 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: AuthFormInputs) => {
     setError(null);
     setLoading(true);
 
     try {
       const result = isSignUp
-        ? await supabase.auth.signUp({ email, password })
-        : await supabase.auth.signInWithPassword({ email, password });
+        ? await supabase.auth.signUp({ email: data.email, password: data.password })
+        : await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
 
       if (result.error) {
         setError(result.error.message);
       } else if (result.data.user) {
-        // For signup without email confirmation, session is included
-        // For signup with email confirmation required, session will be null
         if (isSignUp && !result.data.session) {
           setError('Email verification required. Please check your email inbox to confirm your account.');
           setIsSignUp(false);
-          setEmail('');
-          setPassword('');
         } else {
-          // Either sign-in or sign-up with immediate session
           onAuthSuccess({
             id: result.data.user.id,
             email: result.data.user.email || '',
@@ -73,87 +75,112 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
   };
 
   return (
-    <div className="auth-container">
-      <h1>{isSignUp ? 'Sign Up' : 'Sign In'}</h1>
-
-      {DEV_MODE && (
-        <div style={{ 
-          backgroundColor: '#fff3cd', 
-          padding: '10px', 
-          marginBottom: '15px',
-          borderRadius: '4px',
-          border: '1px solid #ffc107',
-          fontSize: '14px'
-        }}>
-          <strong>🚀 Development Mode:</strong> Use the button below to test without Supabase auth
+    <div className="flex items-center justify-center min-h-screen bg-background px-4">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-foreground">
+            {isSignUp ? 'Create Account' : 'Sign In'}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Manage your projects with ease
+          </p>
         </div>
-      )}
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required={!DEV_MODE}
+        {DEV_MODE && (
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+            <p className="text-sm text-yellow-800">
+              <strong>🚀 Development Mode:</strong> Use the button below to test without Supabase auth
+            </p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 card">
+          <div>
+            <label htmlFor="email" className="label">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              className="input"
+              disabled={loading}
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: 'Please enter a valid email',
+                },
+              })}
+            />
+            {errors.email && <span className="error">{errors.email.message}</span>}
+          </div>
+
+          <div>
+            <label htmlFor="password" className="label">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              className="input"
+              disabled={loading}
+              {...register('password', {
+                required: 'Password is required',
+                minLength: {
+                  value: 6,
+                  message: 'Password must be at least 6 characters',
+                },
+              })}
+            />
+            {errors.password && <span className="error">{errors.password.message}</span>}
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
+          <button
+            type="submit"
             disabled={loading}
-          />
-        </div>
+            className="btn-primary w-full"
+          >
+            {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
+          </button>
+        </form>
 
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required={!DEV_MODE}
+        {DEV_MODE && (
+          <button
+            type="button"
+            onClick={handleDevLogin}
             disabled={loading}
-          />
+            className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium"
+          >
+            {loading ? 'Loading...' : '🚀 Dev Login (Skip Auth)'}
+          </button>
+        )}
+
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+            {' '}
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+              }}
+              disabled={loading}
+              className="font-semibold text-primary hover:underline disabled:opacity-50"
+            >
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </button>
+          </p>
         </div>
-
-        {error && <div className="error">{error}</div>}
-
-        <button type="submit" disabled={loading}>
-          {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
-        </button>
-      </form>
-
-      {DEV_MODE && (
-        <button 
-          type="button"
-          onClick={handleDevLogin}
-          disabled={loading}
-          style={{
-            marginTop: '10px',
-            backgroundColor: '#28a745',
-            color: 'white',
-            padding: '10px 20px',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            width: '100%'
-          }}
-        >
-          {loading ? 'Loading...' : '🚀 Dev Login (Skip Auth)'}
-        </button>
-      )}
-
-      <p>
-        {isSignUp ? 'Already have an account?' : "Don't have an account?"}
-        <button
-          type="button"
-          onClick={() => {
-            setIsSignUp(!isSignUp);
-            setError(null);
-          }}
-          disabled={loading}
-        >
-          {isSignUp ? 'Sign In' : 'Sign Up'}
-        </button>
-      </p>
+      </div>
     </div>
   );
 }

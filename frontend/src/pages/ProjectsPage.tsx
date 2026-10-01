@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 import { Project } from '../types';
@@ -13,18 +14,13 @@ interface ProjectsPageProps {
 const DEV_MODE = import.meta.env.MODE === 'development';
 
 export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [tokenLoading, setTokenLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Get initial session and listen for auth state changes
     const getInitialSession = async () => {
       try {
         if (DEV_MODE && localStorage.getItem('sb-dev-token')) {
-          // Dev mode: get token from backend
           console.log('📝 Dev mode: requesting test token from backend...');
           const response = await fetch('http://localhost:8000/api/v1/dev/token', {
             method: 'POST',
@@ -38,29 +34,20 @@ export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
             setToken(data.token);
           } else {
             console.error('Failed to get dev token');
-            setError('Failed to get dev token');
           }
-          setTokenLoading(false);
         } else {
-          // Production: first try to get existing session
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
             console.log('✅ Token retrieved from Supabase (initial):', session.access_token.substring(0, 20) + '...');
             setToken(session.access_token);
-            setTokenLoading(false);
           } else {
-            // No initial session, wait for auth state changes
             console.log('📝 No initial session, listening for auth changes...');
             const { data: authListener } = supabase.auth.onAuthStateChange(
-              async (event, session) => {
+              async (_event, session) => {
                 if (session?.access_token) {
-                  console.log('✅ Token retrieved from Supabase (event:', event, '):', session.access_token.substring(0, 20) + '...');
+                  console.log('✅ Token retrieved from Supabase:', session.access_token.substring(0, 20) + '...');
                   setToken(session.access_token);
-                } else if (event !== 'INITIAL_SESSION') {
-                  console.warn('❌ No token found in session (event:', event, ')');
-                  setError('Not authenticated - no token in session');
                 }
-                setTokenLoading(false);
               }
             );
             
@@ -71,76 +58,54 @@ export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
         }
       } catch (err) {
         console.error('Error getting token:', err);
-        setError('Error getting authentication token');
-        setTokenLoading(false);
       }
     };
 
     getInitialSession();
   }, [user.id]);
 
-  const loadProjects = useCallback(async () => {
-    if (!token) {
-      console.warn('⚠️ loadProjects called but token is null');
-      return;
+  const { data: projects = [], isLoading, error } = useQuery<Project[], Error>(
+    ['projects', token],
+    () => token ? api.get<Project[]>('/api/v1/projects', token) : Promise.resolve([]),
+    {
+      enabled: !!token,
+      staleTime: 5 * 60 * 1000, // 5 minutes
     }
+  );
 
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('📡 Fetching projects...');
-      const data = await api.get<Project[]>('/api/v1/projects', token);
-      console.log('✅ Projects loaded:', data);
-      setProjects(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load projects';
-      console.error('❌ Error loading projects:', message);
-      setError(message);
-    } finally {
-      setLoading(false);
+  const createMutation = useMutation(
+    (vars: { name: string; description: string }) =>
+      token ? api.post<Project>('/api/v1/projects', vars, token) : Promise.reject(new Error('Not authenticated')),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['projects', token]);
+      },
     }
-  }, [token]);
+  );
 
-  useEffect(() => {
-    if (!token || tokenLoading) return;
-    loadProjects();
-  }, [token, tokenLoading, loadProjects]);
+  const deleteMutation = useMutation(
+    (id: string) =>
+      token ? api.delete(`/api/v1/projects/${id}`, token) : Promise.reject(new Error('Not authenticated')),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['projects', token]);
+      },
+    }
+  );
 
   const handleCreateProject = async (name: string, description: string) => {
-    if (!token) {
-      setError('Not authenticated - token not available');
-      return;
-    }
     try {
-      console.log('📝 Creating project...');
-      const newProject = await api.post<Project>(
-        '/api/v1/projects',
-        { name, description },
-        token,
-      );
-      console.log('✅ Project created:', newProject);
-      setProjects([...projects, newProject]);
-      setError(null);
+      await createMutation.mutateAsync({ name, description });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create project';
-      console.error('❌ Error creating project:', message);
-      setError(message);
+      console.error('Error creating project:', err);
     }
   };
 
   const handleDeleteProject = async (id: string) => {
-    if (!token) {
-      setError('Not authenticated - token not available');
-      return;
-    }
     try {
-      await api.delete(`/api/v1/projects/${id}`, token);
-      setProjects(projects.filter((p) => p.id !== id));
-      setError(null);
+      await deleteMutation.mutateAsync(id);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete project';
-      console.error('❌ Error deleting project:', message);
-      setError(message);
+      console.error('Error deleting project:', err);
     }
   };
 
@@ -153,32 +118,74 @@ export function ProjectsPage({ user, onLogout }: ProjectsPageProps) {
     onLogout();
   };
 
-  if (tokenLoading) {
-    return <div>Authenticating...</div>;
+  if (!token) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-lg text-muted-foreground">Authenticating...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="projects-container">
-      <header>
-        <h1>Projects</h1>
-        <div>
-          <span>{user.email}</span>
-          {DEV_MODE && <span style={{ marginLeft: '10px', fontSize: '12px', color: '#666' }}>🚀 Dev Mode</span>}
-          <button onClick={handleLogout}>Logout</button>
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Projects</h1>
+              <p className="text-sm text-muted-foreground mt-1">{user.email}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {DEV_MODE && (
+                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  🚀 Dev Mode
+                </span>
+              )}
+              <button
+                onClick={handleLogout}
+                className="btn-secondary"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
-      <ProjectForm onCreate={handleCreateProject} />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <ProjectForm
+            onCreate={handleCreateProject}
+            isLoading={createMutation.isLoading}
+            error={createMutation.error ? (createMutation.error as Error).message : undefined}
+          />
+        </div>
 
-      {error && <div className="error">{error}</div>}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 mb-6">
+            <p className="text-sm text-red-800">
+              {error instanceof Error ? error.message : 'An error occurred'}
+            </p>
+          </div>
+        )}
 
-      {loading ? (
-        <div>Loading...</div>
-      ) : projects.length === 0 ? (
-        <div className="empty-state">No projects yet. Create one above!</div>
-      ) : (
-        <ProjectList projects={projects} onDelete={handleDeleteProject} />
-      )}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-lg text-muted-foreground">Loading projects...</div>
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-lg text-muted-foreground">No projects yet.</div>
+            <p className="text-sm text-muted-foreground">Create one above to get started!</p>
+          </div>
+        ) : (
+          <ProjectList
+            projects={projects}
+            onDelete={handleDeleteProject}
+            isDeleting={deleteMutation.isLoading}
+          />
+        )}
+      </main>
     </div>
   );
 }
