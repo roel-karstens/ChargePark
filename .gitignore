@@ -55,6 +55,11 @@ env/
 .DS_Store
 Thumbs.db
 
+# Database (use Supabase PostgreSQL in production, SQLite is dev-only)
+*.db
+*.db-shm
+*.db-wal
+
 # Supabase
 .supabase/
 .supabase.env
