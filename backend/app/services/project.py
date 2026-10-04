@@ -12,6 +12,18 @@ class ProjectService:
     def __init__(self, db):
         self.db = db
 
+    @staticmethod
+    def _normalize_uuid(value: UUID | str) -> UUID:
+        """Convert string to UUID if needed.
+        
+        Args:
+            value: UUID or string representation of UUID.
+            
+        Returns:
+            UUID object.
+        """
+        return UUID(value) if isinstance(value, str) else value
+
     def list_by_owner(self, owner_id: UUID | str) -> list[Project]:
         """
         List all projects owned by a user.
@@ -22,8 +34,7 @@ class ProjectService:
         Returns:
             List of projects owned by the user.
         """
-        if isinstance(owner_id, str):
-            owner_id = UUID(owner_id)
+        owner_id = self._normalize_uuid(owner_id)
 
         projects = self.db.query(Project).filter(Project.owner_id == owner_id).all()
         return projects
@@ -38,9 +49,7 @@ class ProjectService:
         Returns:
             The project, or None if not found.
         """
-        if isinstance(project_id, str):
-            project_id = UUID(project_id)
-
+        project_id = self._normalize_uuid(project_id)
         return self.db.query(Project).filter(Project.id == project_id).first()
 
     def create(
@@ -60,9 +69,7 @@ class ProjectService:
         Returns:
             The created project.
         """
-        if isinstance(owner_id, str):
-            owner_id = UUID(owner_id)
-
+        owner_id = self._normalize_uuid(owner_id)
         project = Project(
             owner_id=owner_id,
             name=name,
@@ -90,9 +97,7 @@ class ProjectService:
         Returns:
             The updated project, or None if not found.
         """
-        if isinstance(project_id, str):
-            project_id = UUID(project_id)
-
+        project_id = self._normalize_uuid(project_id)
         project = self.db.query(Project).filter(Project.id == project_id).first()
         if not project:
             return None
@@ -117,9 +122,7 @@ class ProjectService:
         Returns:
             True if deleted, False if not found.
         """
-        if isinstance(project_id, str):
-            project_id = UUID(project_id)
-
+        project_id = self._normalize_uuid(project_id)
         project = self.db.query(Project).filter(Project.id == project_id).first()
         if not project:
             return False

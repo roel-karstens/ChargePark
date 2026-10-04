@@ -72,51 +72,18 @@ def cleanup():
 
 
 @pytest.fixture
-def client():
-    """Create test client."""
-    return TestClient(app)
-
-
-@pytest.fixture
-def auth_headers():
-    """Create valid auth headers for testing."""
-    # Create a valid JWT token for testing
-    payload = {
-        "sub": "12345678-abcd-4e76-90ab-123456789abc",
-        "iat": 1516239022,
-    }
-    token = jwt.encode(
-        payload,
-        "test-secret",
-        algorithm="HS256",
+def test_project(client, auth_headers):
+    """Create a test project fixture.\n    
+    Returns:
+        dict: The created project data.
+    """
+    response = client.post(
+        "/api/v1/projects",
+        json={"name": "Test Project", "description": "A test project"},
+        headers=auth_headers,
     )
-    return {
-        "Authorization": f"Bearer {token}"
-    }
-
-
-@pytest.fixture
-def client():
-    """Create test client."""
-    return TestClient(app)
-
-
-@pytest.fixture
-def auth_headers():
-    """Create valid auth headers for testing."""
-    # Create a valid JWT token for testing
-    payload = {
-        "sub": "12345678-abcd-4e76-90ab-123456789abc",
-        "iat": 1516239022,
-    }
-    token = jwt.encode(
-        payload,
-        "test-secret",
-        algorithm="HS256",
-    )
-    return {
-        "Authorization": f"Bearer {token}"
-    }
+    assert response.status_code == 201
+    return response.json()
 
 
 @pytest.fixture

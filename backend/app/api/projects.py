@@ -7,10 +7,47 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
 from app.dependencies import get_db
+from app.models.project import Project
 from app.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
 from app.services.project import ProjectService
 
 router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
+
+
+async def get_authorized_project(
+    project_id: UUID,
+    user_id: str = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> Project:
+    """Get a project and verify ownership.
+    
+    Args:
+        project_id: The project ID.
+        user_id: The current user ID (from token).
+        db: Database session.
+        
+    Returns:
+        The authorized project.
+        
+    Raises:
+        HTTPException: If project not found (404) or user doesn't own it (403).
+    """
+    service = ProjectService(db)
+    project = service.get_by_id(project_id)
+
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found",
+        )
+
+    if str(project.owner_id) != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden",
+        )
+
+    return project
 
 
 @router.get("", response_model=list[ProjectRead])
@@ -40,54 +77,22 @@ async def create_project(
 
 @router.get("/{project_id}", response_model=ProjectRead)
 async def get_project(
-    project_id: UUID,
-    user_id: str = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    project: Project = Depends(get_authorized_project),
 ) -> ProjectRead:
     """Get project details."""
-    service = ProjectService(db)
-    project = service.get_by_id(project_id)
-
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
-
-    if str(project.owner_id) != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden",
-        )
-
     return project
 
 
 @router.patch("/{project_id}", response_model=ProjectRead)
 async def update_project(
-    project_id: UUID,
     data: ProjectUpdate,
-    user_id: str = Depends(get_current_user),
+    project: Project = Depends(get_authorized_project),
     db: Session = Depends(get_db),
 ) -> ProjectRead:
     """Update a project."""
     service = ProjectService(db)
-    project = service.get_by_id(project_id)
-
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
-
-    if str(project.owner_id) != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden",
-        )
-
     updated = service.update(
-        project_id=project_id,
+        project_id=project.id,
         name=data.name,
         description=data.description,
     )
@@ -97,24 +102,9 @@ async def update_project(
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(
-    project_id: UUID,
-    user_id: str = Depends(get_current_user),
+    project: Project = Depends(get_authorized_project),
     db: Session = Depends(get_db),
 ) -> None:
     """Delete a project."""
     service = ProjectService(db)
-    project = service.get_by_id(project_id)
-
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found",
-        )
-
-    if str(project.owner_id) != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Forbidden",
-        )
-
-    service.delete(project_id)
+    service.delete(project.id)

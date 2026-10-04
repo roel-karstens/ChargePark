@@ -18,6 +18,49 @@ React Frontend → FastAPI Backend → Supabase PostgreSQL
 
 **Critical Rule**: Frontend MUST NEVER access database or private keys. All access through authenticated FastAPI.
 
+## AI Development Layer
+
+This repository includes specialized infrastructure for AI-assisted development with GitHub Copilot.
+
+**Read this first:** [`docs/ai-development.md`](../../docs/ai-development.md)
+
+### Key Components
+
+**MCP Integrations** (`docs/mcp.md`)
+- Optional external tools: Supabase, Vercel, Browser, GitHub
+- Extend Copilot's capabilities
+- Read-only preferred for production
+
+**Skills** (`.github/skills/`)
+- Specialized task-specific knowledge
+- Use when performing specific types of work
+- Examples: database schema, frontend debugging, deployment, security review, testing
+
+**Agents** (`.github/agents/`)
+- Specialized responsibilities: architect, database, security-reviewer, code-reviewer
+- Invoke for expert analysis and review
+- Delegate complex work
+
+**Prompts** (`.github/prompts/`)
+- Explicit user workflows
+- Example: implement-feature, review, security-review, test-and-review
+
+### How It Works
+
+```
+Global Instructions (this file)
+    ↓
+MCP: External Tools (Supabase, Vercel, Browser)
+    ↓
+Skills: Specialized Knowledge (database, debugging, deployment, security, testing)
+    ↓
+Agents: Specialized Roles (architect, database, security-reviewer, code-reviewer)
+    ↓
+Prompts: User Workflows (implement-feature, review, test-and-review)
+```
+
+The system is **model-agnostic**: works with Claude, OpenAI, or any Copilot model.
+
 ## Responsibilities
 
 **Frontend**
