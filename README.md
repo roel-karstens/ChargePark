@@ -43,6 +43,27 @@ The repository is **model-agnostic** — works with any GitHub Copilot model (Cl
 
 **Key Rule**: Frontend never accesses private keys or database directly. All access through authenticated FastAPI.
 
+## ✨ Code Quality
+
+This repository emphasizes **SOLID principles** and **DRY (Don't Repeat Yourself)**:
+
+- **S**ingle Responsibility: Each service, component, and function has one purpose
+- **O**pen/Closed: Extensible through composition, not modification
+- **L**iskov Substitution: Proper type safety with TypeScript and Python type hints
+- **I**nterface Segregation: Minimal, focused props and parameters
+- **D**ependency Inversion: Dependency injection in FastAPI, prop drilling avoided in React
+
+### Recent Improvements
+
+✅ **Backend**: UUID conversion consolidated into `ProjectService._normalize_uuid()`  
+✅ **Backend**: Authorization logic extracted into `get_authorized_project()` dependency  
+✅ **Frontend**: Error display unified in `ErrorAlert` component  
+✅ **Frontend**: Loading state management consolidated in `useLoadingState()` hook  
+✅ **Frontend**: Dev configuration centralized in `config/dev.ts`  
+✅ **Tests**: Duplicate fixtures removed, added reusable `test_project` fixture
+
+No breaking changes — all improvements maintain backward compatibility.
+
 ## 📁 Repository Structure
 
 ```
@@ -440,55 +461,81 @@ Options:
 
 Set environment variables on your hosting platform (never commit `.env`).
 
-## 🤖 GitHub Copilot Workflow
+## 🤖 AI-Assisted Development
 
-This repository is optimized for AI-assisted development.
+This repository includes a **modern GitHub Copilot AI development layer** with specialized agents, skills, and MCP integrations.
 
-### Using Copilot Chat
+### Agents (Specialized Expertise)
 
-Use the prompts in `.github/prompts/`:
+Four specialized agents handle different responsibilities:
 
-1. **Implement a feature**
-   - Use `implement-feature.prompt.md`
-   - Copilot will follow the UNDERSTAND → INSPECT → PLAN → IMPLEMENT workflow
+| Agent | Purpose |
+|-------|---------|
+| **architect** | Analyze requirements, design solutions, identify trade-offs |
+| **database** | Schema design, migrations, RLS policies, diagnostics |
+| **security-reviewer** | Vulnerability detection, severity classification, hardening |
+| **code-reviewer** | Code quality, correctness, architecture, maintainability |
 
-2. **Review code**
-   - Use `review.prompt.md`
-   - Get feedback on correctness, architecture, security
+### Skills (Specialized Knowledge)
 
-3. **Security audit**
-   - Use `security-review.prompt.md`
-   - Check for vulnerabilities and compliance
+Six domain-specific skills encode best practices and workflows:
 
-4. **Database changes**
-   - Use `database-change.prompt.md`
-   - Create migrations with RLS policies
+| Skill | Focus |
+|-------|-------|
+| **supabase-database** | Schema, migrations, RLS, security patterns |
+| **frontend-debugging** | Browser tools, console, network inspection |
+| **frontend-design** | Components, accessibility, Tailwind CSS patterns |
+| **deployment** | Build, preview, verification, smoke tests |
+| **security-review** | Auth, authz, secrets, vulnerabilities |
+| **testing** | Unit tests, integration tests, validation workflows |
 
-5. **Test and validate**
-   - Use `test-and-review.prompt.md`
-   - Run full validation suite
+### MCP Integrations (Optional)
 
-### Inline Completions
+Optional Model Context Protocol integrations enhance Copilot's capabilities:
 
-Copilot will follow:
-- `.github/copilot-instructions.md` (global)
-- `.github/instructions/*.instructions.md` (path-specific)
+- **Supabase MCP**: Inspect database schema, manage RLS policies, test migrations
+- **Vercel MCP**: Monitor deployments, view logs, manage environment variables
+- **Browser/DevTools MCP**: Inspect running app, debug issues in real-time
+- **GitHub MCP**: Interact with issues, PRs, and repository
 
-Just start typing and Copilot will suggest completions following the patterns.
+See [docs/ai-development.md](docs/ai-development.md) for complete guide.
+
+### Using Copilot with Agents & Skills
+
+**Copilot Chat Prompts** (in `.github/prompts/`):
+- Use when implementing features, reviewing code, auditing security, managing database changes
+
+**Agent References**:
+- Ask Copilot to invoke agents for specialized tasks:
+  - "Use the architect agent to design this feature"
+  - "Have the database agent review this schema"
+  - "Ask the security-reviewer to check for vulnerabilities"
+
+**Skill References**:
+- Request skill guidance when working on specific areas:
+  - "Use the frontend-design skill for this component"
+  - "Apply the testing skill to verify this"
+  - "Reference the security-review skill for this endpoint"
+
+**Inline Completions**:
+- Copilot follows `.github/copilot-instructions.md` (global) and path-specific instructions
+- Leverages skills automatically when you're working in relevant domains
 
 ### Best Practices
 
-1. **Be specific**: Describe what you want, not just "add a feature"
+1. **Be specific**: Describe requirements, not just "add a feature"
 2. **Reference code**: Point to existing patterns to follow
-3. **Ask for validation**: Always request validation before claiming done
-4. **Review diffs**: Check Copilot's changes against security guidelines
-5. **Test first**: Ask for tests before implementation
+3. **Ask for validation**: Always request tests, linting, type checking
+4. **Review diffs**: Check against security and architecture guidelines
+5. **Use agents for complexity**: Delegate architecture/security decisions to specialists
 
-See [AGENTS.md](AGENTS.md) for complete AI development guide.
+See [AGENTS.md](AGENTS.md) and [docs/ai-development.md](docs/ai-development.md) for complete guides.
 
 ## 📖 Documentation
 
 - [AGENTS.md](AGENTS.md) — Complete AI development guide
+- [docs/ai-development.md](docs/ai-development.md) — AI development layer architecture and workflows
+- [docs/mcp.md](docs/mcp.md) — Model Context Protocol integrations setup
 - [docs/architecture.md](docs/architecture.md) — System architecture
 - [docs/security.md](docs/security.md) — Security guidelines
 - [docs/database.md](docs/database.md) — Database schema and migrations
