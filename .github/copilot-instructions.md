@@ -43,7 +43,8 @@ This repository includes specialized infrastructure for AI-assisted development 
 
 **Prompts** (`.github/prompts/`)
 - Explicit user workflows
-- Example: implement-feature, review, security-review, test-and-review
+- **verify-and-ship** — Post-implementation verification (use after implementing!)
+- implement-feature, review, security-review, database-change, test-and-review
 
 ### How It Works
 

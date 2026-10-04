@@ -339,7 +339,27 @@ Follow this workflow for every feature, bug fix, or change:
 - Check for unused imports
 - Verify no secrets in the diff
 
-### 7. REVIEW
+### 7. VERIFY (Evidence-Based)
+
+**CRITICAL: Use the Verification Skill** — "It compiles" is NOT evidence that it works.
+
+- Start the actual application (backend + frontend + database)
+- Exercise the changed code in the real running system
+- Call endpoints with curl/browser (not just unit tests)
+- Verify database state changed as expected
+- Test error cases (wrong auth, invalid input, authorization violations)
+- Test RLS policies block unauthorized access
+- Collect proof: curl output, database queries, screenshots
+- Use the [verify-and-ship prompt](.github/prompts/verify-and-ship.prompt.md)
+- Only then claim the change works
+
+**Reference:**
+- [Verification Skill](.github/skills/verification/SKILL.md) — How to verify
+- [Feature Map](.github/skills/verification/SKILL.md#feature-map) — What to test
+- [verify-and-ship Prompt](.github/prompts/verify-and-ship.prompt.md) — Workflow
+- [Verification Philosophy](docs/verification.md) — Why this matters
+
+### 8. REVIEW
 
 - Review your own git diff carefully
 - Check for correctness, security, and maintainability
@@ -347,13 +367,15 @@ Follow this workflow for every feature, bug fix, or change:
 - Verify tests actually test the feature
 - Confirm RLS and authorization are correct
 - Check for performance issues
+- **Verify evidence of runtime verification** — Link to verification output
 
-### 8. SUMMARIZE
+### 9. SUMMARIZE
 
 - Write a clear summary of what changed
 - Explain why changes were made
 - Note any limitations or known issues
-- List validation steps executed
+- List validation steps executed (lint, type-check, unit tests)
+- **Describe verification evidence** (curl commands, database state, screenshots)
 - Describe remaining risks or follow-up work
 
 ## What AI Should NOT Do
@@ -392,6 +414,75 @@ Copilot will follow the guidelines in `.github/copilot-instructions.md` and path
 4. **Review diffs**: Check Copilot's changes against security and architecture guidelines
 5. **Test first**: Ask for tests before implementation when appropriate
 
+## Verification-First Development
+
+**"It compiles" is NOT evidence that the application works.**
+
+This repository integrates the pstack engineering philosophy emphasizing evidence-based verification on the actual running system.
+
+### The Core Principle
+
+Every meaningful change must be proven to work with concrete evidence from the real application:
+
+```
+❌ Traditional: Tests pass → Code review → Deploy
+                "Tests pass, looks good"
+            Later: ❌ Endpoint returns wrong data
+                   ❌ RLS policy is broken
+                   ❌ Authorization missing
+
+✅ Verification-First: Tests pass → Verify on real app → Deploy
+                      "Here's proof it works:"
+                      - Curl request returned 201 ✅
+                      - Database shows new row ✅  
+                      - Only owner can access (RLS) ✅
+                      - Non-owner gets 403 ✅
+```
+
+### The Verification Workflow
+
+After implementing a feature:
+
+1. **Start the real application** (backend, frontend, database)
+2. **Call actual endpoints** with curl or browser
+3. **Verify database state** changed as expected
+4. **Test authorization** with multiple users
+5. **Collect proof** (curl responses, screenshots, database queries)
+6. **Use verify-and-ship workflow** to document evidence
+7. **Only then claim** the change works
+
+### Resources
+
+- **How to verify:** [.github/skills/verification/SKILL.md](.github/skills/verification/SKILL.md)
+- **What to test:** [Feature Map](.github/skills/verification/SKILL.md#feature-map) — documents all user-facing features
+- **Workflow template:** [.github/prompts/verify-and-ship.prompt.md](.github/prompts/verify-and-ship.prompt.md)
+- **Philosophy & rationale:** [docs/verification.md](docs/verification.md)
+- **Keep it current:** [.github/skills/verification-maintenance/SKILL.md](.github/skills/verification-maintenance/SKILL.md)
+
+### Evidence vs. Guessing
+
+**What does NOT count:**
+- "Tests pass" (without running the real app)
+- "Code looks correct" (without execution)
+- "No type errors" (without runtime proof)
+
+**What counts as evidence:**
+- `curl -X POST http://localhost:8000/api/v1/projects ... → 201 Created {"id": "...", "name": "Test"}`
+- `SELECT * FROM projects WHERE id = '...' → row exists with correct data`
+- `User A can access project, User B gets 403 (authorization works)`
+- `RLS policy checked in Supabase dashboard`
+
+### How Agents Use This
+
+All agents verify claims with evidence:
+
+- **Code-Reviewer:** "Show me the test output and curl response proving this works"
+- **Security-Reviewer:** "Verify authorization with 2 users; show 403 for unauthorized access"
+- **Architect:** "Verify end-to-end; show database state after operation"
+- **Database:** "Verify migration applied; show schema and RLS policies"
+
+---
+
 ## Model Independence
 
 These instructions are **model-agnostic** and work equally well with:
@@ -403,4 +494,4 @@ Do not assume capabilities or behavior of a specific model. The repository setup
 
 ---
 
-**Last updated**: September 2026
+**Last updated**: October 2026

@@ -478,16 +478,20 @@ Four specialized agents handle different responsibilities:
 
 ### Skills (Specialized Knowledge)
 
-Six domain-specific skills encode best practices and workflows:
+Eight domain-specific skills encode best practices and workflows:
 
 | Skill | Focus |
 |-------|-------|
+| **verification** ⭐ | Evidence-based runtime verification (use after implementation!) |
+| **verification-maintenance** | Keep Feature Map current as app evolves |
 | **supabase-database** | Schema, migrations, RLS, security patterns |
 | **frontend-debugging** | Browser tools, console, network inspection |
 | **frontend-design** | Components, accessibility, Tailwind CSS patterns |
 | **deployment** | Build, preview, verification, smoke tests |
 | **security-review** | Auth, authz, secrets, vulnerabilities |
 | **testing** | Unit tests, integration tests, validation workflows |
+
+**⭐ NEW:** The verification skills implement the pstack philosophy—"It compiles" is NOT evidence. Use the **verification** skill after implementing to prove changes work on the actual running system.
 
 ### MCP Integrations (Optional)
 
@@ -503,7 +507,12 @@ See [docs/ai-development.md](docs/ai-development.md) for complete guide.
 ### Using Copilot with Agents & Skills
 
 **Copilot Chat Prompts** (in `.github/prompts/`):
-- Use when implementing features, reviewing code, auditing security, managing database changes
+- `verify-and-ship.prompt.md` — **Use after implementing** to verify changes work
+- `implement-feature.prompt.md` — Building new features
+- `review.prompt.md` — Code review
+- `security-review.prompt.md` — Security audits
+- `database-change.prompt.md` — Schema migrations
+- `test-and-review.prompt.md` — Testing and validation
 
 **Agent References**:
 - Ask Copilot to invoke agents for specialized tasks:
@@ -533,9 +542,18 @@ See [AGENTS.md](AGENTS.md) and [docs/ai-development.md](docs/ai-development.md) 
 
 ## 📖 Documentation
 
+**AI & Verification (New):**
+- [docs/verification.md](docs/verification.md) — **Verification-first philosophy** (start here!)
+- [.github/skills/verification/SKILL.md](.github/skills/verification/SKILL.md) — How to verify changes
+- [.github/skills/verification-maintenance/SKILL.md](.github/skills/verification-maintenance/SKILL.md) — Keep verification current
+- [.github/prompts/verify-and-ship.prompt.md](.github/prompts/verify-and-ship.prompt.md) — Post-implementation workflow
+
+**AI Development:**
 - [AGENTS.md](AGENTS.md) — Complete AI development guide
 - [docs/ai-development.md](docs/ai-development.md) — AI development layer architecture and workflows
 - [docs/mcp.md](docs/mcp.md) — Model Context Protocol integrations setup
+
+**Application:**
 - [docs/architecture.md](docs/architecture.md) — System architecture
 - [docs/security.md](docs/security.md) — Security guidelines
 - [docs/database.md](docs/database.md) — Database schema and migrations
