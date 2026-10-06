@@ -1,33 +1,28 @@
-import { useEffect, useState } from 'react';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { supabase } from './lib/supabase';
-import { AuthPage } from './pages/AuthPage';
-import { ProjectsPage } from './pages/ProjectsPage';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ChargingHomePage } from './pages/ChargingHomePage';
+import { ChargingResultsPage } from './pages/ChargingResultsPage';
+import './App.css';
 
-interface User {
-  id: string;
-  email: string;
-}
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      cacheTime: 1000 * 60 * 10, // 10 minutes
-    },
-  },
-});
-
+/**
+ * ChargePark MVP App
+ *
+ * Routes:
+ * - / → HomePage (search)
+ * - /results → ResultsPage (results with map + list)
+ *
+ * No authentication in MVP (stateless searches)
+ */
 export function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<ChargingHomePage />} />
+        <Route path="/results" element={<ChargingResultsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
+  );
+}
           email: session.user.email || '',
         });
       }
