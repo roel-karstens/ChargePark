@@ -74,7 +74,7 @@ export function MapView({
     if (!leafletMapRef.current) return;
     const map = leafletMapRef.current;
 
-    console.log(`MapView effect triggered: ${chargers.length} chargers`);
+    console.log(`MapView effect triggered: ${chargers.length} chargers, userLocation:`, userLocation);
 
     // Only fit bounds on first load when we have chargers
     if (chargers.length > 0 && isInitializedRef.current) {

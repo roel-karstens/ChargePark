@@ -99,6 +99,7 @@ export function MapBasedHomePage(): JSX.Element {
       <div className="bg-gradient-to-r from-slate-700 to-slate-800 text-white px-4 py-4 shadow-lg z-10">
         <h1 className="text-2xl font-bold">ChargePark</h1>
         <p className="text-slate-300 text-sm">Find nearby EV charging</p>
+        <p className="text-xs text-slate-400 mt-1">Chargers: {searchResults?.results?.length || 0} | Coordinates: {coordinates ? `${coordinates.latitude.toFixed(2)},${coordinates.longitude.toFixed(2)}` : 'none'}</p>
       </div>
 
       {/* Map container */}
