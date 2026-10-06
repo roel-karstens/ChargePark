@@ -34,52 +34,25 @@ export function MapView({
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const isInitializedRef = useRef(false);
 
+  // Initialize map ONLY ONCE on mount
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || isInitializedRef.current) return;
 
-    // Initialize map (only once)
-    if (!leafletMapRef.current) {
-      leafletMapRef.current = L.map(mapRef.current).setView(
-        [userLocation.latitude, userLocation.longitude],
-        15,
-      );
+    isInitializedRef.current = true;
+    leafletMapRef.current = L.map(mapRef.current).setView(
+      [userLocation.latitude, userLocation.longitude],
+      15,
+    );
 
-      // Add OpenStreetMap tiles (standard, free, no API key)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(leafletMapRef.current);
-    }
+    // Add OpenStreetMap tiles (standard, free, no API key)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(leafletMapRef.current);
 
-    const map = leafletMapRef.current;
-
-    // Calculate optimal zoom level based on chargers to show walking distance
-    if (chargers.length > 0) {
-      // Create bounds group with user location and chargers
-      const bounds = L.latLngBounds([
-        [userLocation.latitude, userLocation.longitude],
-      ]);
-      
-      // Add chargers to bounds
-      chargers.forEach((result) => {
-        const lat = parseFloat(result.charger.latitude);
-        const lon = parseFloat(result.charger.longitude);
-        bounds.extend([lat, lon]);
-      });
-      
-      // Fit map to bounds with padding (maxZoom 16 for closeup detail)
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
-    } else {
-      // No chargers: center on user with good zoom for walking distance
-      map.setView([userLocation.latitude, userLocation.longitude], 15);
-    }
-
-    // Clear existing charger markers
-    markersRef.current.forEach((marker) => marker.remove());
-    markersRef.current.clear();
-
-    // Add user location marker (grey circle)
+    // Add user location marker (grey circle) - once at init
     const userMarker = L.circleMarker(
       [userLocation.latitude, userLocation.longitude],
       {
@@ -90,8 +63,34 @@ export function MapView({
         weight: 2,
       }
     );
-    userMarker.addTo(map);
+    userMarker.addTo(leafletMapRef.current);
     userMarker.bindPopup('<strong>Your Location</strong>', { offset: L.point(0, -10) });
+  }, []); // Empty dependency - only on mount
+
+  // Update markers and zoom ONLY when chargers change (not userLocation)
+  useEffect(() => {
+    if (!leafletMapRef.current) return;
+    const map = leafletMapRef.current;
+
+    // Only fit bounds on first load when we have chargers
+    if (chargers.length > 0 && isInitializedRef.current) {
+      const bounds = L.latLngBounds([
+        [userLocation.latitude, userLocation.longitude],
+      ]);
+      
+      chargers.forEach((result) => {
+        const lat = parseFloat(result.charger.latitude);
+        const lon = parseFloat(result.charger.longitude);
+        bounds.extend([lat, lon]);
+      });
+      
+      // Fit map to bounds with padding (maxZoom 16 for closeup detail)
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+    }
+
+    // Clear existing charger markers
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current.clear();
 
     // Add charger markers
     chargers.forEach((result) => {
@@ -101,8 +100,7 @@ export function MapView({
         ? parseFloat(result.cost_estimate.cost_per_hour_eur)
         : 0;
 
-      // Color based on price per hour: subtle grey-green
-      // Cheap: soft green, Moderate: soft yellow, Expensive: soft red
+      // Color based on price per hour
       let markerColor = '#78a569'; // soft green
       if (pricePerHour > 0.5) markerColor = '#d4a574'; // soft golden
       if (pricePerHour > 1.0) markerColor = '#b8696b'; // soft red-brown
@@ -147,7 +145,7 @@ export function MapView({
     return () => {
       // Cleanup on unmount
     };
-  }, [userLocation, chargers, selectedCharger, onChargerSelect]);
+  }, [chargers, selectedCharger, onChargerSelect]);
 
   return (
     <div
