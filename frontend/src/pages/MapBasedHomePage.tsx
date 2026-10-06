@@ -25,12 +25,18 @@ export function MapBasedHomePage(): JSX.Element {
   // Auto-search when location is available
   useEffect(() => {
     if (coordinates && !searchLoading) {
+      console.log('Auto-searching from coordinates:', coordinates);
       performSearch();
     }
-  }, [coordinates]);
+  }, [coordinates, searchLoading]);
 
   const performSearch = async () => {
-    if (!coordinates) return;
+    if (!coordinates) {
+      console.warn('performSearch called but no coordinates available');
+      return;
+    }
+
+    console.log('Performing search with coordinates:', coordinates, 'radius:', radius);
 
     try {
       // Use coordinates directly for search
@@ -40,6 +46,8 @@ export function MapBasedHomePage(): JSX.Element {
         radius_meters: radius,
         sort_by: 'cost',
       });
+
+      console.log('Search result:', result);
 
       if (result) {
         setSearchResults(result);
