@@ -45,9 +45,9 @@ export function MapView({
         15,
       );
 
-      // Add CartoDB Positron (grey, clean aesthetic)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap © CartoDB',
+      // Add OpenStreetMap Greyscale (free, no API key required)
+      L.tileLayer('https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
       }).addTo(leafletMapRef.current);
     }
