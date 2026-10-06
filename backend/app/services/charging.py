@@ -108,6 +108,7 @@ class ChargingService:
         self,
         battery_percentage: int,
         price_per_kwh: Optional[Decimal],
+        charger_power_kw: Optional[Decimal] = None,
     ) -> ChargingCostEstimate:
         """
         Calculate charging cost and time estimate.
@@ -115,6 +116,7 @@ class ChargingService:
         Args:
             battery_percentage: Current battery level (0-100%)
             price_per_kwh: Price in EUR/kWh (None if unknown)
+            charger_power_kw: Charger power in kW for hourly cost (None if unknown)
 
         Returns:
             ChargingCostEstimate with breakdown
@@ -135,11 +137,17 @@ class ChargingService:
             total_cost = kwh_needed * avg_price
             confidence = "estimated"
 
+        # Calculate cost per hour: charger_power_kw * price_per_kwh
+        cost_per_hour = None
+        if charger_power_kw and price_per_kwh:
+            cost_per_hour = float(charger_power_kw) * float(price_per_kwh)
+
         return ChargingCostEstimate(
             total_cost_eur=Decimal(str(round(total_cost, 2))),
             battery_kwh=Decimal(str(round(kwh_needed, 1))),
             charging_time_minutes=charging_minutes,
             cost_confidence=confidence,
+            cost_per_hour_eur=Decimal(str(round(cost_per_hour, 2))) if cost_per_hour else None,
         )
 
     def charger_to_detail_response(self, charger: dict) -> ChargerDetailResponse:
@@ -189,6 +197,7 @@ class ChargingService:
         cost_estimate = self.calculate_cost(
             battery_percentage,
             charger["price_per_kwh"],
+            charger["charger_power_kw"],
         )
 
         # Estimate walking time if not provided (assume 1.4 m/s = 1 min per 84m)

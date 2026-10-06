@@ -162,6 +162,10 @@ class ChargingCostEstimate(BaseModel):
         pattern="^(exact|estimated|unknown)$",
         description="Confidence level: exact (price known), estimated (guessed), unknown (no data)"
     )
+    cost_per_hour_eur: Optional[Decimal] = Field(
+        None,
+        description="Cost per hour of charging in EUR (based on charger power and kWh price)"
+    )
 
 
 class ChargingResultItem(BaseModel):

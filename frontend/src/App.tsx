@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { HomePage } from './pages/ChargingHomePage';
+import { MapBasedHomePage } from './pages/MapBasedHomePage';
 import { ResultsPage } from './pages/ChargingResultsPage';
 import './App.css';
 
@@ -16,7 +16,7 @@ export function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<MapBasedHomePage />} />
         <Route path="/results" element={<ResultsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

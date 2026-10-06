@@ -30,6 +30,7 @@ export interface ChargingCostEstimate {
   battery_kwh: string;
   charging_time_minutes: number;
   cost_confidence: "exact" | "estimated" | "unknown";
+  cost_per_hour_eur?: string;
 }
 
 export interface ChargingResultItem {

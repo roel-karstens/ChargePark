@@ -3,140 +3,138 @@
  *
  * Features:
  * - Interactive Leaflet map
- * - Charger markers
- * - Destination marker
+ * - User location marker (blue)
+ * - Charger markers (red/green based on price)
  * - Click marker to select charger
  * - Mobile-optimized
- *
- * Note: Requires leaflet to be installed (npm install leaflet)
  */
 
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import type { ChargingSearchResponse } from '../types';
+import type { ChargingResultItem } from '../types';
+
+interface UserLocation {
+  latitude: number;
+  longitude: number;
+}
 
 interface MapViewProps {
-  response: ChargingSearchResponse | null;
-  selectedChargerId?: string;
-  onSelectCharger?: (chargerId: string) => void;
+  userLocation: UserLocation;
+  chargers: ChargingResultItem[];
+  selectedCharger?: ChargingResultItem | null;
+  onChargerSelect?: (charger: ChargingResultItem) => void;
 }
 
 export function MapView({
-  response,
-  selectedChargerId,
-  onSelectCharger,
+  userLocation,
+  chargers,
+  selectedCharger,
+  onChargerSelect,
 }: MapViewProps): JSX.Element {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
 
   useEffect(() => {
-    if (!mapRef.current || !response) return;
+    if (!mapRef.current) return;
 
     // Initialize map (only once)
     if (!leafletMapRef.current) {
       leafletMapRef.current = L.map(mapRef.current).setView(
-        [parseFloat(response.latitude), parseFloat(response.longitude)],
+        [userLocation.latitude, userLocation.longitude],
         14,
       );
 
       // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-          '© OpenStreetMap contributors',
+        attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
       }).addTo(leafletMapRef.current);
     }
 
     const map = leafletMapRef.current;
 
-    // Clear existing markers
+    // Update map view if user location changes
+    map.setView([userLocation.latitude, userLocation.longitude], 14);
+
+    // Clear existing charger markers
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current.clear();
 
-    // Add destination marker
-    const destinationMarker = L.circleMarker(
-      [parseFloat(response.latitude), parseFloat(response.longitude)],
+    // Add user location marker (blue circle)
+    const userMarker = L.circleMarker(
+      [userLocation.latitude, userLocation.longitude],
       {
-        radius: 8,
-        fillColor: '#2563eb',
-        color: '#1e40af',
-        weight: 2,
-        opacity: 1,
+        color: '#3b82f6',
+        fillColor: '#60a5fa',
         fillOpacity: 0.8,
-      },
-    )
-      .bindPopup(`<strong>${response.destination}</strong>`)
-      .addTo(map);
+        radius: 10,
+        weight: 3,
+      }
+    );
+    userMarker.addTo(map);
+    userMarker.bindPopup('<strong>Your Location</strong>', { offset: L.point(0, -10) });
 
     // Add charger markers
-    response.results.forEach((result, index) => {
-      const { charger } = result;
-      const isSelected = charger.id === selectedChargerId;
+    chargers.forEach((result) => {
+      const lat = parseFloat(result.charger.latitude);
+      const lon = parseFloat(result.charger.longitude);
+      const pricePerHour = result.cost_estimate.cost_per_hour_eur
+        ? parseFloat(result.cost_estimate.cost_per_hour_eur)
+        : 0;
 
-      const marker = L.circleMarker(
-        [parseFloat(charger.latitude), parseFloat(charger.longitude)],
-        {
-          radius: isSelected ? 12 : 8,
-          fillColor: isSelected ? '#10b981' : '#84cc16',
-          color: isSelected ? '#059669' : '#65a30d',
-          weight: isSelected ? 3 : 2,
-          opacity: 1,
-          fillOpacity: isSelected ? 0.9 : 0.7,
-        },
-      )
-        .bindPopup(
-          `<div class="font-sm"><strong>${charger.name}</strong><br/>
-           €${result.cost_estimate.total_cost_eur} • ${result.total_time_minutes}min</div>`,
-        )
-        .on('click', () => {
-          onSelectCharger?.(charger.id);
-        })
-        .addTo(map);
+      // Color based on price per hour: green (cheap), yellow (moderate), red (expensive)
+      let markerColor = '#10b981'; // green
+      if (pricePerHour > 0.5) markerColor = '#f59e0b'; // yellow
+      if (pricePerHour > 1.0) markerColor = '#ef4444'; // red
 
-      // Add label
-      const label = L.tooltip(
-        { permanent: true, direction: 'top', offset: [0, -15] },
-        marker,
-      )
-        .setContent(`${index + 1}`)
-        .addTo(map);
+      const chargerMarker = L.circleMarker([lat, lon], {
+        color: markerColor,
+        fillColor: markerColor,
+        fillOpacity: 0.8,
+        radius: 8,
+        weight: 2,
+      });
 
-      markersRef.current.set(charger.id, marker);
+      chargerMarker.addTo(map);
+
+      // Create popup content
+      const popupContent = `
+        <div class="p-2 text-sm">
+          <strong>${result.charger.name}</strong><br/>
+          €${pricePerHour.toFixed(2)}/hr • ${result.charger.charger_power_kw}kW<br/>
+          ${result.distance_meters}m away
+        </div>
+      `;
+      chargerMarker.bindPopup(popupContent);
+
+      // Click to select
+      chargerMarker.on('click', () => {
+        onChargerSelect?.(result);
+      });
+
+      // Highlight if selected
+      if (selectedCharger?.charger.id === result.charger.id) {
+        chargerMarker.setStyle({
+          color: '#000',
+          weight: 4,
+          fillOpacity: 1,
+        });
+      }
+
+      markersRef.current.set(result.charger.id, chargerMarker);
     });
 
-    // Fit map to bounds (destination + chargers)
-    const group = new L.FeatureGroup([destinationMarker, ...markersRef.current.values()]);
-    map.fitBounds(group.getBounds(), { padding: [50, 50] });
-
-    // Update marker when selected charger changes
     return () => {
-      markersRef.current.forEach((marker, id) => {
-        if (id === selectedChargerId) {
-          marker.setRadius(12);
-          marker.setStyle({ weight: 3, fillOpacity: 0.9 });
-        } else {
-          marker.setRadius(8);
-          marker.setStyle({ weight: 2, fillOpacity: 0.7 });
-        }
-      });
+      // Cleanup on unmount
     };
-  }, [response, selectedChargerId, onSelectCharger]);
-
-  if (!response) {
-    return (
-      <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-        <p className="text-gray-500">Search for charging options to see the map</p>
-      </div>
-    );
-  }
+  }, [userLocation, chargers, selectedCharger, onChargerSelect]);
 
   return (
     <div
       ref={mapRef}
-      className="w-full h-64 sm:h-96 rounded-lg border border-gray-300 shadow-md"
-      role="region"
-      aria-label="Map of charging points"
+      className="w-full h-full bg-gray-200 rounded-lg shadow-md"
+      style={{ minHeight: '400px' }}
     />
   );
 }
