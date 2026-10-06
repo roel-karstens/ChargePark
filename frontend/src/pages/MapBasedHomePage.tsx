@@ -20,7 +20,7 @@ export function MapBasedHomePage(): JSX.Element {
   const { search, isLoading: searchLoading, error: searchError } = useChargingSearch();
   const [searchResults, setSearchResults] = useState<ChargingSearchResponse | null>(null);
   const [selectedCharger, setSelectedCharger] = useState<ChargingResultItem | null>(null);
-  const [radius, setRadius] = useState(1000); // meters
+  const [radius, setRadius] = useState(5000); // meters (5km default for wider search)
 
   // Auto-search when location is available
   useEffect(() => {
