@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ChargingHomePage } from './pages/ChargingHomePage';
-import { ChargingResultsPage } from './pages/ChargingResultsPage';
+import { HomePage } from './pages/ChargingHomePage';
+import { ResultsPage } from './pages/ChargingResultsPage';
 import './App.css';
 
 /**
@@ -16,8 +16,8 @@ export function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<ChargingHomePage />} />
-        <Route path="/results" element={<ChargingResultsPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/results" element={<ResultsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
