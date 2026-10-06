@@ -12,9 +12,9 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from psycopg2.pool import SimpleConnectionPool
+from sqlalchemy.orm import Session
 
-from app.dependencies import get_db_pool
+from app.dependencies import get_db
 from app.schemas.charging import (
     ChargingSearchRequest,
     ChargingSearchResponse,
@@ -44,7 +44,7 @@ router = APIRouter(prefix="/api/v1", tags=["charging"])
 )
 async def search_charging(
     request: ChargingSearchRequest,
-    db_pool: Annotated[SimpleConnectionPool, Depends(get_db_pool)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> ChargingSearchResponse:
     """
     Search for charging options near a destination.
@@ -56,7 +56,7 @@ async def search_charging(
 
     Args:
         request: Search parameters (destination, battery %, radius, sort by)
-        db_pool: Database connection pool
+        db: Database session
 
     Returns:
         Ranked list of charging options with costs and times
@@ -96,7 +96,7 @@ async def search_charging(
         )
 
         # Step 2: Find nearby chargers
-        charging_service = ChargingService(db_pool)
+        charging_service = ChargingService(db)
         nearby_chargers = charging_service.search_chargers_by_location(
             latitude=dest_lat,
             longitude=dest_lon,
@@ -189,14 +189,14 @@ async def search_charging(
 )
 async def get_charger_detail(
     charger_id: str,
-    db_pool: Annotated[SimpleConnectionPool, Depends(get_db_pool)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> ChargerDetailResponse:
     """
     Get detailed information about a specific charger.
 
     Args:
         charger_id: UUID of the charger
-        db_pool: Database connection pool
+        db: Database session
 
     Returns:
         Charger details
@@ -207,7 +207,7 @@ async def get_charger_detail(
     logger.info(f"Fetching charger details: {charger_id}")
 
     try:
-        charging_service = ChargingService(db_pool)
+        charging_service = ChargingService(db)
         charger = charging_service.get_charger_by_id(charger_id)
 
         if not charger:
@@ -249,7 +249,7 @@ async def get_charger_detail(
 )
 async def geocode_search(
     query: Annotated[str, Query(..., min_length=2, max_length=255)],
-    limit: Annotated[int, Query(default=5, ge=1, le=20)] = 5,
+    limit: Annotated[int, Query(ge=1, le=20)] = 5,
 ) -> GeocodeSearchResponse:
     """
     Search for addresses and locations via geocoding.

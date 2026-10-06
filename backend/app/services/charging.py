@@ -8,8 +8,9 @@ import logging
 from decimal import Decimal
 from typing import Any, Optional
 
-import psycopg2
-import psycopg2.extras
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
 from app.schemas.charging import (
     ChargerDetailResponse,
     ChargingCostEstimate,
@@ -26,17 +27,9 @@ LINEAR_CHARGING_TIME_MINUTES_PER_PERCENT = 1  # 60 min for 0-100%
 class ChargingService:
     """Service for charging point search and cost calculation."""
 
-    def __init__(self, db_connection_pool):
-        """Initialize with database connection pool."""
-        self.pool = db_connection_pool
-
-    def get_connection(self):
-        """Get a connection from the pool."""
-        return self.pool.getconn()
-
-    def return_connection(self, conn):
-        """Return connection to pool."""
-        self.pool.putconn(conn)
+    def __init__(self, db_session: Session):
+        """Initialize with SQLAlchemy database session."""
+        self.db = db_session
 
     def search_chargers_by_location(
         self,
@@ -57,9 +50,7 @@ class ChargingService:
         Returns:
             List of charger dicts with distance in meters
         """
-        conn = self.get_connection()
-        try:
-            query = """
+        query = text("""
             SELECT 
                 id,
                 ndw_id,
@@ -76,24 +67,32 @@ class ChargingService:
                 last_updated,
                 ST_Distance(
                     location,
-                    ST_Point(%s, %s, 4326)::geography
+                    ST_Point(:lon, :lat, 4326)::geography
                 )::INT as distance_meters
             FROM charging_points
             WHERE ST_DWithin(
                 location,
-                ST_Point(%s, %s, 4326)::geography,
-                %s
+                ST_Point(:lon, :lat, 4326)::geography,
+                :radius
             )
             ORDER BY distance_meters ASC
-            LIMIT %s
-            """
+            LIMIT :limit
+        """)
 
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute(
-                    query,
-                    (longitude, latitude, longitude, latitude, radius_meters, limit)
-                )
-                results = cur.fetchall()
+        try:
+            result = self.db.execute(
+                query,
+                {
+                    "lat": latitude,
+                    "lon": longitude,
+                    "radius": radius_meters,
+                    "limit": limit,
+                },
+            )
+            rows = result.fetchall()
+            
+            # Convert Row objects to dicts
+            results = [dict(row._mapping) for row in rows]
 
             logger.info(
                 f"Found {len(results)} chargers within {radius_meters}m "
@@ -101,11 +100,9 @@ class ChargingService:
             )
             return results
 
-        except psycopg2.Error as e:
+        except Exception as e:
             logger.error(f"Database error searching chargers: {e}")
             raise
-        finally:
-            self.return_connection(conn)
 
     def calculate_cost(
         self,
@@ -252,31 +249,28 @@ class ChargingService:
         Returns:
             Charger dict or None
         """
-        conn = self.get_connection()
-        try:
-            query = """
+        query = text("""
             SELECT 
                 id, ndw_id, name, address, latitude, longitude,
                 charger_power_kw, connector_types, num_connectors,
                 price_per_kwh, availability_total, availability_available,
                 last_updated, created_at, updated_at
             FROM charging_points
-            WHERE id = %s
-            """
+            WHERE id = :charger_id
+        """)
 
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute(query, (charger_id,))
-                result = cur.fetchone()
+        try:
+            result = self.db.execute(query, {"charger_id": charger_id})
+            row = result.fetchone()
 
-            if result:
+            if row:
+                result_dict = dict(row._mapping)
                 logger.info(f"Retrieved charger {charger_id}")
+                return result_dict
             else:
                 logger.info(f"Charger {charger_id} not found")
+                return None
 
-            return result
-
-        except psycopg2.Error as e:
+        except Exception as e:
             logger.error(f"Database error getting charger {charger_id}: {e}")
             raise
-        finally:
-            self.return_connection(conn)
