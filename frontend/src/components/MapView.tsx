@@ -34,6 +34,7 @@ export function MapView({
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+  const glowMarkersRef = useRef<L.Marker[]>([]);
   const isInitializedRef = useRef(false);
 
   // Initialize map ONLY ONCE on mount
@@ -88,9 +89,11 @@ export function MapView({
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
     }
 
-    // Clear existing charger markers
+    // Clear existing charger markers and glow effects
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current.clear();
+    glowMarkersRef.current.forEach((marker) => marker.remove());
+    glowMarkersRef.current = [];
 
     // Add charger markers
     chargers.forEach((result) => {
@@ -100,17 +103,29 @@ export function MapView({
         ? parseFloat(result.cost_estimate.cost_per_hour_eur)
         : 0;
 
-      // Color based on price per hour
-      let markerColor = '#78a569'; // soft green
-      if (pricePerHour > 0.5) markerColor = '#d4a574'; // soft golden
-      if (pricePerHour > 1.0) markerColor = '#b8696b'; // soft red-brown
+      // Dark blue color palette with subtle glow effect
+      let markerColor = '#1e3a8a'; // dark navy blue
+      if (pricePerHour > 0.5) markerColor = '#1e40af'; // medium dark blue
+      if (pricePerHour > 1.0) markerColor = '#1d4ed8'; // slightly lighter blue
 
-      const chargerMarker = L.circleMarker([lat, lon], {
-        color: '#888888',  // grey border
+      // Create glow effect with larger semi-transparent circle underneath
+      const glowMarker = L.circleMarker([lat, lon], {
+        color: 'none',
         fillColor: markerColor,
-        fillOpacity: 0.7,
+        fillOpacity: 0.15,
+        radius: 12,
+        weight: 0,
+      });
+      glowMarker.addTo(map);
+      glowMarkersRef.current.push(glowMarker);
+
+      // Main marker on top
+      const chargerMarker = L.circleMarker([lat, lon], {
+        color: '#ffffff',  // white border for contrast
+        fillColor: markerColor,
+        fillOpacity: 0.95,
         radius: 7,
-        weight: 1.5,
+        weight: 2,
       });
 
       chargerMarker.addTo(map);
@@ -133,9 +148,10 @@ export function MapView({
       // Highlight if selected
       if (selectedCharger?.charger.id === result.charger.id) {
         chargerMarker.setStyle({
-          color: '#333333',
-          weight: 2.5,
-          fillOpacity: 0.9,
+          color: '#fbbf24',  // golden/yellow border for selection
+          weight: 3,
+          fillOpacity: 1.0,
+          fillColor: '#0c4a6e',  // darker blue for selection
         });
       }
 
