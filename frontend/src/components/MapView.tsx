@@ -37,6 +37,7 @@ export function MapView({
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const glowMarkersRef = useRef<L.Marker[]>([]);
   const isInitializedRef = useRef(false);
+  const hasZoomedRef = useRef(false); // Track if we've already done initial zoom
 
   // Initialize map ONLY ONCE on mount
   useEffect(() => {
@@ -76,8 +77,8 @@ export function MapView({
 
     console.log(`MapView effect triggered: ${chargers.length} chargers, userLocation:`, userLocation);
 
-    // Only fit bounds on first load when we have chargers
-    if (chargers.length > 0 && isInitializedRef.current) {
+    // Only fit bounds on first successful load when we have chargers (never again after user manually zooms)
+    if (chargers.length > 0 && !hasZoomedRef.current) {
       const bounds = L.latLngBounds([
         [userLocation.latitude, userLocation.longitude],
       ]);
@@ -90,6 +91,7 @@ export function MapView({
       
       // Fit map to bounds with padding (maxZoom 16 for closeup detail)
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+      hasZoomedRef.current = true; // Mark that we've done initial zoom
     }
 
     // Clear existing charger markers and glow effects
