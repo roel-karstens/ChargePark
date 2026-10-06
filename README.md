@@ -478,15 +478,17 @@ Four specialized agents handle different responsibilities:
 
 ### Skills (Specialized Knowledge)
 
-Eleven domain-specific skills encode best practices and workflows:
+Thirteen domain-specific skills encode best practices and workflows:
 
 | Skill | Focus |
 |-------|-------|
 | **verification** ⭐ | Evidence-based runtime verification + visual verification for UI |
 | **verification-maintenance** | Keep Feature Map current as app evolves |
-| **design-review** ⭐ NEW | Visual quality audit (hierarchy, spacing, colors, accessibility) |
-| **component-testing** ⭐ NEW | Patterns for testing component variations, states, accessibility |
-| **responsive-verification** ⭐ NEW | Systematic mobile/tablet/desktop testing with screenshots |
+| **design-review** ⭐ | Visual quality audit (hierarchy, spacing, colors, accessibility) |
+| **design-taste-frontend** ⭐ NEW | Premium design taste: constraint, hierarchy, whitespace, intentionality |
+| **design-system** ⭐ NEW | Evolve DESIGN.md, manage tokens, audit consistency |
+| **component-testing** ⭐ | Patterns for testing component variations, states, accessibility |
+| **responsive-verification** ⭐ | Systematic mobile/tablet/desktop testing with screenshots |
 | **supabase-database** | Schema, migrations, RLS, security patterns |
 | **frontend-debugging** | Browser tools, console, network inspection |
 | **frontend-design** ⭐ ENHANCED | Components, accessibility, design direction workflow |
@@ -494,7 +496,10 @@ Eleven domain-specific skills encode best practices and workflows:
 | **security-review** | Auth, authz, secrets, vulnerabilities |
 | **testing** | Unit tests, integration tests, validation workflows |
 
-**⭐ P1 PHASE**: Added **component-testing** and **responsive-verification** skills. Enhanced **frontend-design** with design direction workflow (establish visual strategy before coding).
+**Phase Progress**:
+- ✅ **P0**: Design-first infrastructure (design-review, DESIGN.md template, focus states)
+- ✅ **P1**: Component quality & responsive verification (component-testing, responsive-verification, design direction)
+- ✅ **P2**: Design taste & system management (design-taste-frontend, design-system)
 
 ### MCP Integrations (Optional)
 
