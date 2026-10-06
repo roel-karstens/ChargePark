@@ -12,6 +12,7 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import type { ChargingResultItem } from '../types';
+import './MapView.css';
 
 interface UserLocation {
   latitude: number;
@@ -115,6 +116,7 @@ export function MapView({
         fillOpacity: 0.15,
         radius: 12,
         weight: 0,
+        bubblingMouseEvents: false,  // Don't intercept clicks
       });
       glowMarker.addTo(map);
       glowMarkersRef.current.push(glowMarker);
@@ -126,9 +128,20 @@ export function MapView({
         fillOpacity: 0.95,
         radius: 7,
         weight: 2,
+        bubblingMouseEvents: true,  // Allow clicks to bubble
       });
 
       chargerMarker.addTo(map);
+
+      // Add price tooltip that always shows above marker
+      const tooltip = L.tooltip({
+        permanent: true,
+        direction: 'top',
+        offset: [0, -20],
+        className: 'charger-price-tooltip',
+      });
+      tooltip.setContent(`€${pricePerHour.toFixed(2)}/hr`);
+      chargerMarker.bindTooltip(tooltip);
 
       // Create popup content
       const popupContent = `
