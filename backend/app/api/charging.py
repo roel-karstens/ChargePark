@@ -9,6 +9,7 @@ Endpoints:
 
 import logging
 from datetime import datetime
+from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -71,29 +72,45 @@ async def search_charging(
     )
 
     try:
-        # Step 1: Geocode destination
-        geocoding_service = GeocodingService()
-        geocode_results = geocoding_service.search_address(request.destination, limit=1)
+        # Step 1: Determine destination coordinates
+        dest_lat = None
+        dest_lon = None
+        
+        # Check if destination is already coordinates (lat,lon format)
+        if ',' in request.destination:
+            try:
+                parts = request.destination.split(',')
+                if len(parts) == 2:
+                    dest_lat = float(parts[0].strip())
+                    dest_lon = float(parts[1].strip())
+                    logger.info(f"Using provided coordinates: ({dest_lat}, {dest_lon})")
+            except ValueError:
+                pass  # Not coordinates, will geocode below
+        
+        # If not coordinates, geocode the address
+        if dest_lat is None or dest_lon is None:
+            geocoding_service = GeocodingService()
+            geocode_results = geocoding_service.search_address(request.destination, limit=1)
 
-        if not geocode_results:
-            logger.warning(f"Could not geocode: {request.destination}")
-            raise HTTPException(
-                status_code=404,
-                detail={
-                    "error": "DESTINATION_NOT_FOUND",
-                    "message": f"Could not find destination: {request.destination}",
-                    "status_code": 404,
-                },
+            if not geocode_results:
+                logger.warning(f"Could not geocode: {request.destination}")
+                raise HTTPException(
+                    status_code=404,
+                    detail={
+                        "error": "DESTINATION_NOT_FOUND",
+                        "message": f"Could not find destination: {request.destination}",
+                        "status_code": 404,
+                    },
+                )
+
+            destination_result = geocode_results[0]
+            dest_lat = float(destination_result.latitude)
+            dest_lon = float(destination_result.longitude)
+
+            logger.info(
+                f"Geocoded to: {destination_result.address} "
+                f"({dest_lat}, {dest_lon})"
             )
-
-        destination_result = geocode_results[0]
-        dest_lat = float(destination_result.latitude)
-        dest_lon = float(destination_result.longitude)
-
-        logger.info(
-            f"Geocoded to: {destination_result.address} "
-            f"({dest_lat}, {dest_lon})"
-        )
 
         # Step 2: Find nearby chargers
         charging_service = ChargingService(db)
@@ -156,8 +173,8 @@ async def search_charging(
 
         return ChargingSearchResponse(
             destination=request.destination,
-            latitude=destination_result.latitude,
-            longitude=destination_result.longitude,
+            latitude=Decimal(str(dest_lat)),
+            longitude=Decimal(str(dest_lon)),
             battery_percentage=request.battery_percentage,
             results=ranked_results,
             total_results=len(ranked_results),
