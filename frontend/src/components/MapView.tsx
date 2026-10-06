@@ -74,6 +74,8 @@ export function MapView({
     if (!leafletMapRef.current) return;
     const map = leafletMapRef.current;
 
+    console.log(`MapView effect triggered: ${chargers.length} chargers`);
+
     // Only fit bounds on first load when we have chargers
     if (chargers.length > 0 && isInitializedRef.current) {
       const bounds = L.latLngBounds([
@@ -103,6 +105,8 @@ export function MapView({
       const pricePerHour = result.cost_estimate.cost_per_hour_eur
         ? parseFloat(result.cost_estimate.cost_per_hour_eur)
         : 0;
+
+      console.log(`Adding marker for ${result.charger.name} at (${lat}, ${lon}), price: €${pricePerHour}/hr`);
 
       // Dark blue color palette with subtle glow effect
       let markerColor = '#1e3a8a'; // dark navy blue
@@ -134,14 +138,12 @@ export function MapView({
       chargerMarker.addTo(map);
 
       // Add price tooltip that always shows above marker
-      const tooltip = L.tooltip({
+      chargerMarker.bindTooltip(`€${pricePerHour.toFixed(2)}/hr`, {
         permanent: true,
         direction: 'top',
-        offset: [0, -20],
+        offset: L.point(0, -20),
         className: 'charger-price-tooltip',
       });
-      tooltip.setContent(`€${pricePerHour.toFixed(2)}/hr`);
-      chargerMarker.bindTooltip(tooltip);
 
       // Create popup content
       const popupContent = `
@@ -155,6 +157,7 @@ export function MapView({
 
       // Click to select
       chargerMarker.on('click', () => {
+        console.log(`Clicked on ${result.charger.name}`);
         onChargerSelect?.(result);
       });
 
