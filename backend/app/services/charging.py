@@ -139,8 +139,10 @@ class ChargingService:
 
         # Calculate cost per hour: charger_power_kw * price_per_kwh
         cost_per_hour = None
+        logger.debug(f"calculate_cost: charger_power_kw={charger_power_kw}, price_per_kwh={price_per_kwh}")
         if charger_power_kw and price_per_kwh:
             cost_per_hour = float(charger_power_kw) * float(price_per_kwh)
+            logger.debug(f"Calculated cost_per_hour: €{cost_per_hour}/hr")
 
         return ChargingCostEstimate(
             total_cost_eur=Decimal(str(round(total_cost, 2))),
