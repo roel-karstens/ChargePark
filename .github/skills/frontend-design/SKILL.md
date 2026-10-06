@@ -7,8 +7,180 @@
 - Creating accessible interfaces
 - Ensuring design consistency
 - Reviewing component architecture for quality
+- **Establishing design direction BEFORE coding** ⭐ NEW
+- **Auditing existing UI for visual quality** ⭐ NEW
 
-## Principles
+---
+
+## Part 1: Design Direction (Before You Code)
+
+**REQUIRED FIRST STEP**: Establish visual direction before writing any code.
+
+### The Design Direction Workflow
+
+Do NOT jump straight to implementation. Instead:
+
+#### Step 1: Understand the Product Context
+
+Ask yourself:
+- What is this feature trying to accomplish?
+- Who are the users?
+- What's the brand personality? (professional? playful? modern? warm?)
+- What problem does this solve?
+- What emotions should users feel?
+
+**Example**:
+> Building a "Create Project" form for a project management app
+> - Users: Small teams, individuals planning projects
+> - Brand: Professional, clear, minimal
+> - Goal: Make project creation fast and intuitive
+> - Emotion: Confident, ready to start
+
+#### Step 2: Review Project's DESIGN.md
+
+**CRITICAL**: Every project must have a `DESIGN.md` that defines:
+- Visual identity (brand voice, direction)
+- Design tokens (colors, typography, spacing)
+- Component patterns (buttons, forms, cards)
+- Accessibility requirements
+- Do's and don'ts
+
+**Read it first.** Your UI must follow the design system.
+
+If DESIGN.md doesn't exist:
+1. Copy `DESIGN.md.template` from repository root
+2. Fill in your project's design direction
+3. Commit it
+4. Use it as reference while building
+
+**Example DESIGN.md section**:
+```
+## Design Direction
+Brand Voice: Modern & minimal
+Colors: Blue primary, gray neutral, red destructive
+Typography: 16px body, 20px headings
+Spacing: 8px grid (multiples of 8)
+Components: Simple cards, clean buttons, no decorations
+```
+
+#### Step 3: Establish Visual Direction
+
+**Before designing the form, answer:**
+
+1. **Visual Hierarchy**
+   - What should users see first? (probably the project name field)
+   - What's secondary? (description, optional fields)
+   - What's tertiary? (help text, cancel button)
+
+2. **Component Choices**
+   - Text input for project name? (or something else?)
+   - Textarea for description?
+   - Are there other input types needed?
+   - What button variants for primary/secondary?
+
+3. **Layout**
+   - Vertical form (stacked fields)?
+   - Two columns? (name left, description right?)
+   - What spacing between fields?
+   - Button at bottom or inline?
+
+4. **Visual Style**
+   - Use existing DESIGN.md tokens
+   - Primary color for submit button? (yes)
+   - Card container? (maybe)
+   - Empty vs filled form? (consider initial state)
+
+**Example Vision**:
+```
+Create Project Form:
+- Heading: "Create New Project"
+- Name field: Full width, required, focus first
+- Description field: Full width, optional, larger
+- Buttons: Primary (Create) on left, Secondary (Cancel) on right
+- Styling: Inside .card with 24px padding
+- States: Empty (no placeholder), Loading (disabled), Error (red message)
+```
+
+#### Step 4: Identify Patterns (New vs Existing)
+
+**Questions**:
+- Is this a new component type? (e.g., first form in the app?)
+- Can I reuse an existing component? (e.g., existing Button, Input?)
+- What patterns exist in DESIGN.md? (follow them)
+- Should I create a reusable Form component or inline?
+
+**Decision Tree**:
+```
+Is this a one-off form?
+  → YES: Build inline (ProjectForm.tsx)
+  → NO: Create reusable FormField component
+
+Are there existing buttons/inputs?
+  → YES: Use .btn-primary, .input classes
+  → NO: Create them in index.css using DESIGN.md tokens
+
+Does DESIGN.md have form patterns?
+  → YES: Follow them exactly
+  → NO: Add them to DESIGN.md (create pattern first)
+```
+
+#### Step 5: Document Design Decisions
+
+Before coding, write a brief design brief:
+
+```markdown
+## Create Project Form - Design Brief
+
+### Goal
+Allow users to quickly create new projects with name and description.
+
+### Visual Direction
+- Following project's "modern minimal" style
+- Uses blue primary button, gray secondary
+- 8px grid spacing
+- 16px body text, 20px heading
+
+### Layout
+- Vertical stack (mobile-first)
+- Card container with 24px padding
+- Full-width fields
+- Buttons at bottom (stacked mobile, inline desktop)
+
+### States
+- Empty: Placeholder text for guidance
+- Loading: Disabled inputs, "Creating..." button text
+- Error: Red message below field
+- Success: "Project created" confirmation
+
+### Accessibility
+- Labels associated with inputs
+- Focus rings visible on all fields
+- Keyboard navigation: Tab through fields → button
+- ARIA labels: aria-label="Create project"
+
+### Responsive
+- Mobile: Stacked fields, full-width button
+- Desktop: Form centered, max-width 600px
+
+### Existing Patterns Used
+- .btn-primary, .btn-secondary (from index.css)
+- .input class for fields
+- .card for container
+- .space-y-4 for field spacing
+
+### New Patterns Created
+- FormField composite component (label + input + error)
+```
+
+**Why write this?**
+- Clarifies thinking before coding
+- Prevents halfway changes
+- Serves as reference while building
+- Easier code review (reviewers understand intent)
+
+---
+
+## Part 2: Design Principles (Original)
 
 ### 1. Accessible First
 - WCAG 2.1 AA compliance

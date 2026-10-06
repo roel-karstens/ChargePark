@@ -478,23 +478,23 @@ Four specialized agents handle different responsibilities:
 
 ### Skills (Specialized Knowledge)
 
-Nine domain-specific skills encode best practices and workflows:
+Eleven domain-specific skills encode best practices and workflows:
 
 | Skill | Focus |
 |-------|-------|
 | **verification** ⭐ | Evidence-based runtime verification + visual verification for UI |
 | **verification-maintenance** | Keep Feature Map current as app evolves |
 | **design-review** ⭐ NEW | Visual quality audit (hierarchy, spacing, colors, accessibility) |
+| **component-testing** ⭐ NEW | Patterns for testing component variations, states, accessibility |
+| **responsive-verification** ⭐ NEW | Systematic mobile/tablet/desktop testing with screenshots |
 | **supabase-database** | Schema, migrations, RLS, security patterns |
 | **frontend-debugging** | Browser tools, console, network inspection |
-| **frontend-design** | Components, accessibility, Tailwind CSS patterns |
+| **frontend-design** ⭐ ENHANCED | Components, accessibility, design direction workflow |
 | **deployment** | Build, preview, verification, smoke tests |
 | **security-review** | Auth, authz, secrets, vulnerabilities |
 | **testing** | Unit tests, integration tests, validation workflows |
 
-**⭐ NEW:** The **design-review** skill systematically audits UI for visual quality (hierarchy, spacing, colors, focus states, responsiveness, accessibility). Use after implementing UI to catch issues code review alone won't find.
-
-**⭐ ENHANCED:** The **verification** skill now includes visual verification section for frontend changes (responsive screenshots, design quality checks).
+**⭐ P1 PHASE**: Added **component-testing** and **responsive-verification** skills. Enhanced **frontend-design** with design direction workflow (establish visual strategy before coding).
 
 ### MCP Integrations (Optional)
 

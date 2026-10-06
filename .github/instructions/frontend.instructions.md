@@ -138,22 +138,19 @@ return <div>{/* render data */}</div>;
 
 ## Testing (Vitest)
 
-- Component tests for complex UI
+Use the [component-testing skill](../.github/skills/component-testing/SKILL.md) for patterns.
+
+- Component tests for complex UI (variants, props, interactions)
 - Hook tests for custom logic
+- State testing (loading, error, success, empty)
+- Accessibility testing (keyboard navigation, labels, focus)
 - User interaction tests using `@testing-library/react`
 - Meaningful coverage, not 100%
 
-```typescript
-import { render, screen } from '@testing-library/react';
-import { MyComponent } from './MyComponent';
-
-describe('MyComponent', () => {
-  it('renders title', () => {
-    render(<MyComponent title="Test" onClose={() => {}} />);
-    expect(screen.getByText('Test')).toBeInTheDocument();
-  });
-});
-```
+Before writing tests:
+1. Read the component-testing skill for patterns and examples
+2. Copy test template structure
+3. Test variants, user interactions, states, accessibility
 
 ## Accessibility
 
@@ -176,6 +173,32 @@ All UI must meet WCAG 2.1 AA standards:
 3. Verify all interactive elements have focus ring
 4. Verify order makes logical sense
 ```
+
+## Responsive Design
+
+Use the [responsive-verification skill](../.github/skills/responsive-verification/SKILL.md) for systematic testing.
+
+**Before shipping any UI:**
+1. Test on mobile (375px): Single column, readable text, 44px+ buttons
+2. Test on tablet (768px): Two-column layout, adequate spacing
+3. Test on desktop (1024px+): Full layout, max-width on text
+
+**Mobile-first approach**:
+- Write base styles for mobile
+- Add `md:` and `lg:` prefixes for larger screens
+- Example: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3`
+
+**Touch targets** (mobile):
+- Buttons ≥ 44px tall
+- Spacing ≥ 8px between interactive elements
+- No hover-only actions (mobile has no hover)
+
+**Take screenshots** as evidence:
+1. Open DevTools (F12)
+2. Toggle device toolbar (Ctrl+Shift+M)
+3. Resize to 375px, 768px, 1024px
+4. Capture screenshots
+5. Include in verification report
 
 ## Build and Validation
 
