@@ -167,10 +167,7 @@ export function MapView({
     <div
       ref={mapRef}
       className="w-full h-full bg-gray-200 rounded-lg shadow-md"
-      style={{ 
-        minHeight: '400px',
-        filter: 'grayscale(90%)'  // Apply greyscale filter for clean aesthetic
-      }}
+      style={{ minHeight: '400px' }}
     />
   );
 }
