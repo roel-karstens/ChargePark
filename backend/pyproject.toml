@@ -16,6 +16,8 @@ dependencies = [
     "supabase>=2.0.0",
     "sqlalchemy>=2.0",
     "pyproject-toml>=0.0.10",
+    "httpx>=0.25.0",
+    "psycopg2-binary>=2.9.0",
 ]
 
 [project.optional-dependencies]
