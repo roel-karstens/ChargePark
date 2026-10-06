@@ -88,9 +88,9 @@ export function MapBasedHomePage(): JSX.Element {
   return (
     <div className="w-full h-screen flex flex-col bg-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-4 shadow-lg z-10">
+      <div className="bg-gradient-to-r from-slate-700 to-slate-800 text-white px-4 py-4 shadow-lg z-10">
         <h1 className="text-2xl font-bold">ChargePark</h1>
-        <p className="text-blue-100 text-sm">Find cheap EV charging near you</p>
+        <p className="text-slate-300 text-sm">Find nearby EV charging</p>
       </div>
 
       {/* Map container */}
@@ -104,11 +104,11 @@ export function MapBasedHomePage(): JSX.Element {
           />
         )}
 
-        {/* Radius control panel (floating) */}
-        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 z-20 w-80">
-          <h3 className="font-semibold text-gray-900 mb-3">Search Radius</h3>
+        {/* Radius control panel (floating) - always visible */}
+        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-4 z-20 w-72 border border-slate-200">
+          <h3 className="font-semibold text-slate-900 mb-3 text-sm">Search Radius</h3>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <input
               type="range"
               min="500"
@@ -119,9 +119,9 @@ export function MapBasedHomePage(): JSX.Element {
                 const newRadius = parseInt(e.target.value);
                 handleRadiusChange(newRadius);
               }}
-              className="flex-1 cursor-pointer"
+              className="flex-1 cursor-pointer h-2"
             />
-            <span className="text-lg font-bold text-blue-600 w-20 text-right">
+            <span className="text-base font-bold text-slate-700 w-16 text-right">
               {(radius / 1000).toFixed(1)}km
             </span>
           </div>
@@ -129,104 +129,105 @@ export function MapBasedHomePage(): JSX.Element {
           <button
             onClick={performSearch}
             disabled={searchLoading}
-            className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400 transition font-medium"
+            className="w-full mt-3 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:bg-slate-400 transition font-medium text-sm"
           >
-            {searchLoading ? 'Searching...' : 'Search Again'}
+            {searchLoading ? 'Searching...' : 'Search'}
           </button>
 
           {searchResults && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                <strong>{searchResults.total_results}</strong> chargers found
+            <div className="mt-3 pt-3 border-t border-slate-200">
+              <p className="text-xs text-slate-600">
+                <strong className="text-slate-900">{searchResults.total_results}</strong> chargers found
               </p>
             </div>
           )}
 
           {searchError && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
               {searchError}
             </div>
           )}
         </div>
 
-        {/* Charger details panel (if selected) */}
+        {/* Charger details panel (bottom sheet) - prominent price display */}
         {selectedCharger && (
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl p-6 z-20 max-h-96 overflow-y-auto">
+          <div className="absolute bottom-0 left-0 right-0 bg-white border-t-4 border-slate-700 rounded-t-3xl shadow-2xl p-6 z-30 max-h-96 overflow-y-auto">
             <button
               onClick={() => setSelectedCharger(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl"
             >
               ✕
             </button>
 
             <div className="pr-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
+              {/* Station Name */}
+              <h2 className="text-2xl font-bold text-slate-900 mb-1">
                 {selectedCharger.charger.name}
               </h2>
+              <p className="text-sm text-slate-600 mb-4">{selectedCharger.charger.address}</p>
 
-              <p className="text-sm text-gray-600 mb-4">{selectedCharger.charger.address}</p>
+              {/* PRICE - VERY PROMINENT */}
+              <div className="mb-6 p-5 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl border-2 border-slate-300">
+                <p className="text-sm text-slate-600 font-semibold mb-1">Hourly Charge Cost</p>
+                <p className="text-5xl font-bold text-slate-900">
+                  €{selectedCharger.cost_estimate.cost_per_hour_eur || '0.00'}
+                </p>
+                <p className="text-sm text-slate-600 mt-1">/hour</p>
+              </div>
 
-              {/* Key metrics */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                {/* Cost per hour */}
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <p className="text-2xl font-bold text-blue-600">
-                    €{selectedCharger.cost_estimate.cost_per_hour_eur || '0.00'}
-                  </p>
-                  <p className="text-xs text-gray-600">per hour</p>
-                </div>
-
+              {/* Key Metrics */}
+              <div className="grid grid-cols-3 gap-3 mb-6">
                 {/* Power level */}
-                <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <p className="text-2xl font-bold text-green-600">
-                    {selectedCharger.charger.charger_power_kw}kW
+                <div className="text-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-2xl font-bold text-slate-700">
+                    {selectedCharger.charger.charger_power_kw}
                   </p>
-                  <p className="text-xs text-gray-600">power</p>
+                  <p className="text-xs text-slate-600 mt-1">kW power</p>
                 </div>
 
                 {/* Distance */}
-                <div className="text-center p-3 bg-orange-50 rounded-lg">
-                  <p className="text-2xl font-bold text-orange-600">
-                    {(selectedCharger.distance_meters / 1000).toFixed(2)}km
+                <div className="text-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-2xl font-bold text-slate-700">
+                    {(selectedCharger.distance_meters / 1000).toFixed(2)}
                   </p>
-                  <p className="text-xs text-gray-600">away</p>
+                  <p className="text-xs text-slate-600 mt-1">km away</p>
+                </div>
+
+                {/* Walking time */}
+                <div className="text-center p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <p className="text-2xl font-bold text-slate-700">
+                    {selectedCharger.distance_minutes || '-'}
+                  </p>
+                  <p className="text-xs text-slate-600 mt-1">min walk</p>
                 </div>
               </div>
 
               {/* Details */}
-              <div className="space-y-3 text-sm">
+              <div className="space-y-2 text-sm border-t border-slate-200 pt-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Connector Types:</span>
-                  <span className="font-semibold text-gray-900">
+                  <span className="text-slate-600">Price per kWh:</span>
+                  <span className="font-semibold text-slate-900">
+                    €{selectedCharger.charger.price_per_kwh}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Connector Types:</span>
+                  <span className="font-semibold text-slate-900">
                     {selectedCharger.charger.connector_types.join(', ')}
                   </span>
                 </div>
 
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Available:</span>
-                  <span className="font-semibold text-gray-900">
+                  <span className="text-slate-600">Available:</span>
+                  <span className="font-semibold text-slate-900">
                     {selectedCharger.charger.availability_available}/{selectedCharger.charger.availability_total}
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Price:</span>
-                  <span className="font-semibold text-gray-900">
-                    €{selectedCharger.charger.price_per_kwh}/kWh
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Distance:</span>
-                  <span className="font-semibold text-gray-900">
-                    {selectedCharger.distance_meters}m
-                    {selectedCharger.distance_minutes && ` (${selectedCharger.distance_minutes}min walk)`}
                   </span>
                 </div>
               </div>
 
               {/* Action button */}
-              <button className="w-full mt-6 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+              <button className="w-full mt-6 px-4 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition font-semibold">
                 Navigate to Charger
               </button>
             </div>
@@ -236,7 +237,7 @@ export function MapBasedHomePage(): JSX.Element {
 
       {/* Bottom info when no charger selected */}
       {!selectedCharger && searchResults && searchResults.total_results === 0 && (
-        <div className="absolute bottom-6 left-6 right-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
+        <div className="absolute bottom-6 left-6 right-6 bg-slate-50 border border-slate-300 rounded-lg p-4 text-sm text-slate-700">
           No chargers found within {(radius / 1000).toFixed(1)}km. Try increasing the search radius.
         </div>
       )}

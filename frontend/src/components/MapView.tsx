@@ -42,34 +42,52 @@ export function MapView({
     if (!leafletMapRef.current) {
       leafletMapRef.current = L.map(mapRef.current).setView(
         [userLocation.latitude, userLocation.longitude],
-        14,
+        15,
       );
 
-      // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
+      // Add CartoDB Positron (grey, clean aesthetic)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap © CartoDB',
         maxZoom: 19,
       }).addTo(leafletMapRef.current);
     }
 
     const map = leafletMapRef.current;
 
-    // Update map view if user location changes
-    map.setView([userLocation.latitude, userLocation.longitude], 14);
+    // Calculate optimal zoom level based on chargers to show walking distance
+    if (chargers.length > 0) {
+      // Create bounds group with user location and chargers
+      const bounds = L.latLngBounds([
+        [userLocation.latitude, userLocation.longitude],
+      ]);
+      
+      // Add chargers to bounds
+      chargers.forEach((result) => {
+        const lat = parseFloat(result.charger.latitude);
+        const lon = parseFloat(result.charger.longitude);
+        bounds.extend([lat, lon]);
+      });
+      
+      // Fit map to bounds with padding (maxZoom 16 for closeup detail)
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+    } else {
+      // No chargers: center on user with good zoom for walking distance
+      map.setView([userLocation.latitude, userLocation.longitude], 15);
+    }
 
     // Clear existing charger markers
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current.clear();
 
-    // Add user location marker (blue circle)
+    // Add user location marker (grey circle)
     const userMarker = L.circleMarker(
       [userLocation.latitude, userLocation.longitude],
       {
-        color: '#3b82f6',
-        fillColor: '#60a5fa',
-        fillOpacity: 0.8,
-        radius: 10,
-        weight: 3,
+        color: '#666666',
+        fillColor: '#4b5563',
+        fillOpacity: 0.6,
+        radius: 9,
+        weight: 2,
       }
     );
     userMarker.addTo(map);
@@ -83,17 +101,18 @@ export function MapView({
         ? parseFloat(result.cost_estimate.cost_per_hour_eur)
         : 0;
 
-      // Color based on price per hour: green (cheap), yellow (moderate), red (expensive)
-      let markerColor = '#10b981'; // green
-      if (pricePerHour > 0.5) markerColor = '#f59e0b'; // yellow
-      if (pricePerHour > 1.0) markerColor = '#ef4444'; // red
+      // Color based on price per hour: subtle grey-green
+      // Cheap: soft green, Moderate: soft yellow, Expensive: soft red
+      let markerColor = '#78a569'; // soft green
+      if (pricePerHour > 0.5) markerColor = '#d4a574'; // soft golden
+      if (pricePerHour > 1.0) markerColor = '#b8696b'; // soft red-brown
 
       const chargerMarker = L.circleMarker([lat, lon], {
-        color: markerColor,
+        color: '#888888',  // grey border
         fillColor: markerColor,
-        fillOpacity: 0.8,
-        radius: 8,
-        weight: 2,
+        fillOpacity: 0.7,
+        radius: 7,
+        weight: 1.5,
       });
 
       chargerMarker.addTo(map);
@@ -116,9 +135,9 @@ export function MapView({
       // Highlight if selected
       if (selectedCharger?.charger.id === result.charger.id) {
         chargerMarker.setStyle({
-          color: '#000',
-          weight: 4,
-          fillOpacity: 1,
+          color: '#333333',
+          weight: 2.5,
+          fillOpacity: 0.9,
         });
       }
 
