@@ -11,6 +11,32 @@ applyTo: "frontend/**/*.{ts,tsx}"
 - Vitest for tests
 - ESLint for code quality
 
+## Design System
+
+**Every project must have a `DESIGN.md`** that documents:
+- Visual identity and brand direction
+- Design tokens (colors, typography, spacing)
+- Component patterns and variants
+- Accessibility rules and focus states
+- Responsive breakpoint behavior
+- Do's and don'ts for visual consistency
+
+**Before implementing UI:**
+1. Review the project's `DESIGN.md`
+2. Use design tokens from `tailwind.config.ts`
+3. Follow component patterns documented
+
+**After implementing UI:**
+1. Use the [design-review skill](../.github/skills/design-review/SKILL.md) to audit visual quality
+2. Verify: hierarchy, spacing, colors, typography, accessibility
+3. Check responsive behavior (mobile/tablet/desktop)
+4. Document visual verification evidence (screenshots)
+
+**See also:**
+- [DESIGN.md.template](../../DESIGN.md.template) - Copy this for new projects
+- [Design-Review Skill](../.github/skills/design-review/SKILL.md) - How to review UI quality
+- [Visual Verification](../.github/skills/verification/SKILL.md#visual-verification-frontend-changes) - How to verify appearance
+
 ## TypeScript Guidelines
 
 - Strict mode enabled
@@ -131,11 +157,25 @@ describe('MyComponent', () => {
 
 ## Accessibility
 
-- Semantic HTML
-- ARIA labels where needed
-- Keyboard navigation
-- Color contrast
-- Form labels and descriptions
+All UI must meet WCAG 2.1 AA standards:
+
+- **Semantic HTML**: Always use `<button>` for actions, `<input>` for forms, `<label htmlFor>` for fields
+- **Focus States**: All buttons and inputs must have visible focus rings (blue ring with offset)
+  - Use `.btn-primary`, `.btn-secondary`, `.btn-ghost` classes (already have focus states)
+  - Use `.input` class for inputs (already has focus ring)
+  - For custom elements, add class `focus-ring` or manually add `focus-visible:ring-2 focus-visible:ring-offset-2`
+- **ARIA Labels**: Icon buttons must have `aria-label="description"` (e.g., `<button aria-label="Delete project">`)
+- **Keyboard Navigation**: Tab through page must work in logical order (left-to-right, top-to-bottom)
+- **Color Contrast**: Text must have ≥ 4.5:1 contrast ratio (our design tokens meet this)
+- **Touch Targets**: Interactive elements must be ≥ 44px tall (buttons have padding for this)
+
+**Test keyboard navigation:**
+```bash
+1. Open page in browser
+2. Press Tab repeatedly
+3. Verify all interactive elements have focus ring
+4. Verify order makes logical sense
+```
 
 ## Build and Validation
 

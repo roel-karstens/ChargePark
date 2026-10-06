@@ -188,6 +188,135 @@ When done verifying, clean up processes and restore state.
 
 ---
 
+## Visual Verification (Frontend Changes)
+
+For frontend changes, verify not just that it **works**, but that it **looks good**.
+
+### Visual Verification Checklist
+
+**Before taking screenshots:**
+- [ ] Page loads without console errors
+- [ ] No loading spinners or placeholders visible
+- [ ] Wait 1-2 seconds for animations to settle
+- [ ] Full viewport visible (no overlays covering content)
+
+**Mobile (375px width)**
+1. Open DevTools (F12)
+2. Toggle device toolbar (Ctrl+Shift+M)
+3. Set viewport to 375px width
+4. Take screenshot
+5. Verify:
+   - [ ] Single column layout (not cramped multi-column)
+   - [ ] Text readable without zoom
+   - [ ] Buttons/inputs are 44px+ tall
+   - [ ] No horizontal scrollbar
+   - [ ] Spacing consistent (8px multiples)
+
+**Tablet (768px width)**
+1. Set viewport to 768px width
+2. Take screenshot
+3. Verify:
+   - [ ] Two-column or appropriate layout
+   - [ ] Spacing increases (more breathing room)
+   - [ ] All features visible
+   - [ ] No awkward gaps or wrapping
+
+**Desktop (1024px+ width)**
+1. Set viewport to 1024px width
+2. Take screenshot
+3. Verify:
+   - [ ] Full layout with all columns
+   - [ ] Max-width constraint (if text, line length ≤ 65 chars)
+   - [ ] Adequate spacing between sections
+   - [ ] Hover states work (if applicable)
+
+### Design Quality Checks
+
+**Visual Hierarchy**
+- [ ] Heading sizes clearly differ (H1 > H2 > H3)
+- [ ] CTA button visually prominent
+- [ ] Secondary actions less prominent
+- [ ] Important content stands out
+
+**Spacing & Alignment**
+- [ ] Spacing consistent (all gaps 8px multiples)
+- [ ] Elements align to grid (not random)
+- [ ] Information density appropriate (not cramped)
+
+**Typography**
+- [ ] Headings use correct font weight (semibold/bold)
+- [ ] Body text is readable (16px+)
+- [ ] Secondary text noticeably muted (gray)
+
+**Color**
+- [ ] All colors from design system (no hardcoded hex)
+- [ ] Primary color used for main actions only
+- [ ] Contrast adequate (4.5:1 minimum)
+
+**Accessibility**
+- [ ] Tab through page with keyboard (Shift+Tab backward)
+- [ ] Focus ring visible on all buttons/inputs
+- [ ] All interactive elements have visible focus
+- [ ] No keyboard traps
+
+**States**
+- [ ] Empty state shown (if list/grid empty)
+- [ ] Loading state shows feedback (disabled button, "Saving..." text)
+- [ ] Error state displays message
+- [ ] Success state provides confirmation
+
+### Document Visual Evidence
+
+When reporting changes, include:
+
+```
+## Visual Verification Evidence
+
+### Mobile (375px)
+[Screenshot of mobile view]
+
+Issues found: (none, or list specific problems)
+
+### Tablet (768px)
+[Screenshot of tablet view]
+
+Issues found: (none, or list specific problems)
+
+### Desktop (1024px+)
+[Screenshot of desktop view]
+
+Issues found: (none, or list specific problems)
+
+### Keyboard Navigation
+[Description of tab order and focus visibility]
+
+### Design Quality
+- ✅ Visual hierarchy clear (heading > body > secondary)
+- ✅ Spacing consistent (all gaps 8px multiples)
+- ✅ Colors from design system
+- ✅ Focus states visible
+- ✅ All states handled (empty, loading, error, success)
+```
+
+### Tools & Methods
+
+**Screenshot capture:**
+1. Open DevTools → Console
+2. Adjust viewport as needed
+3. Screenshot (Ctrl+Shift+S) or Print → Save as PDF
+
+**Contrast checking:**
+1. Open Chrome DevTools → Inspect element
+2. Styles panel → Click on color
+3. Check contrast ratio at bottom (should be ≥ 4.5:1)
+
+**Keyboard navigation testing:**
+1. Close DevTools (reduces viewport width)
+2. Press Tab repeatedly, verify order makes sense
+3. All interactive elements should show focus ring
+
+---
+
 ## Feature Map
 
 This section documents all user-facing and system-level features. For each feature, it describes exactly what evidence proves the feature works.

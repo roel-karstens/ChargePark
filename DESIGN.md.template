@@ -1,0 +1,323 @@
+# Design System - [Project Name]
+
+This document is the single source of truth for visual design decisions in this project. All UI components should follow these rules.
+
+## Design Direction
+
+**Brand Voice**: [Describe the visual personality: e.g., "Modern & minimal", "Playful & approachable", "Professional & serious"]
+
+**Target Audience**: [Who are we building for?]
+
+**Visual Identity**: [What makes this app distinctive? Why would users recognize it?]
+
+**Avoid**: [Common aesthetics to reject: e.g., "generic SaaS template look", "excessive cards", "icon overload"]
+
+## Design Tokens
+
+### Colors
+
+| Name | Hex | HSL | Use |
+|------|-----|-----|-----|
+| Primary | #3B82F6 | hsl(212 95% 58%) | Main actions, focus states |
+| Primary Foreground | #F8FAFC | hsl(210 40% 98%) | Text on primary |
+| Secondary | #F1F5F9 | hsl(210 40% 96%) | Secondary actions, backgrounds |
+| Destructive | #E85D75 | hsl(0 84% 60%) | Errors, delete actions |
+| Border | #E5E7EB | hsl(214 31.8% 91.4%) | Dividers, input borders |
+| Background | #FFFFFF | hsl(0 0% 100%) | Page background |
+| Foreground | #0F172A | hsl(212 12% 3.9%) | Body text |
+| Muted | #F1F5F9 | hsl(210 40% 96%) | Disabled states, secondary text |
+
+**Usage Rules**:
+- Primary for CTAs (buttons, links)
+- Secondary for optional actions
+- Destructive only for delete/error
+- Never use more than 5 colors in single view
+
+### Typography
+
+| Level | Size | Weight | Use |
+|-------|------|--------|-----|
+| H1 | 2xl (32px) | bold (700) | Page titles |
+| H2 | xl (20px) | semibold (600) | Section headings |
+| H3 | lg (18px) | semibold (600) | Subsection headings |
+| Body | base (16px) | normal (400) | Body text, paragraphs |
+| Body Small | sm (14px) | normal (400) | Secondary text, help text |
+| Caption | xs (12px) | normal (400) | Labels, metadata |
+
+**Line Height**: 1.5x (150%) for body text, 1.2x (120%) for headings
+
+**Font Stack**: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`
+
+### Spacing (8px Grid)
+
+| Scale | Pixels | Use |
+|-------|--------|-----|
+| xs | 4px | None (don't use) |
+| sm | 8px | Tight spacing (rarely) |
+| md | 16px | Default spacing |
+| lg | 24px | Large spacing |
+| xl | 32px | Extra large spacing |
+| 2xl | 48px | Page-level spacing |
+
+**Rule**: All spacing must be multiples of 8px. No arbitrary gaps.
+
+### Border Radius
+
+| Name | Size | Use |
+|------|------|-----|
+| sm | 4px | Small elements |
+| md | 6px | Buttons, inputs |
+| lg | 8px | Cards, containers |
+
+**Rule**: Match radius to component size; larger components use larger radius
+
+### Shadows
+
+| Intensity | Use |
+|-----------|-----|
+| None | Flat components (badges, pills) |
+| Light | Cards on light backgrounds |
+| Medium | Hover states, lifted cards |
+| Heavy | Modals, dropdowns |
+
+**Example**: `.shadow` (light), `.shadow-md` (medium), `.shadow-lg` (heavy)
+
+## Components
+
+### Button
+
+**Variants**:
+- Primary: Blue, full opacity. Used for main CTAs.
+- Secondary: Gray background, border. Used for optional actions.
+- Ghost: No background, blue text. Used for minimal actions.
+
+**States**:
+- Default: Full opacity
+- Hover: Slight opacity change (90%)
+- Disabled: 50% opacity, cursor not-allowed
+- Focus: Blue ring (2px), offset 2px
+- Active: Darker background (for toggles)
+
+**Sizes**:
+- Small: 8px 12px, text-sm
+- Medium: 10px 16px, text-base (default)
+- Large: 12px 20px, text-lg
+
+**Code Pattern**:
+```tsx
+<button className="btn-primary">Create</button>
+<button className="btn-secondary">Cancel</button>
+<button className="btn-ghost">Learn more</button>
+```
+
+### Input / Textarea
+
+**States**:
+- Default: Border visible, placeholder gray
+- Focus: 2px blue ring, no outline
+- Disabled: 50% opacity, cursor not-allowed
+- Error: Red border (or red text below)
+
+**Sizes**:
+- Default: 12px padding, 16px text
+- Large: 16px padding, 16px text
+
+**Code Pattern**:
+```tsx
+<input type="text" className="input" placeholder="Name..." />
+<textarea className="input" placeholder="Description..." />
+```
+
+### Card
+
+**Structure**:
+- White background
+- 1px gray border
+- 8px border radius
+- 24px padding
+- Light shadow
+
+**When to use**: Grouping related content, standalone sections
+
+**Code Pattern**:
+```tsx
+<div className="card">
+  <h3 className="text-lg font-semibold mb-2">Title</h3>
+  <p className="text-sm text-muted-foreground">Content</p>
+</div>
+```
+
+### Form
+
+**Field Layout**:
+- Label above input
+- 8px gap between label and input
+- 16px gap between fields
+- Error message directly below input, red color
+
+**Code Pattern**:
+```tsx
+<div className="space-y-4">
+  <div>
+    <label className="label" htmlFor="name">Project Name</label>
+    <input id="name" className="input" type="text" />
+  </div>
+  <div>
+    <label className="label" htmlFor="desc">Description</label>
+    <textarea id="desc" className="input" />
+  </div>
+</div>
+```
+
+### States (Loading, Error, Empty)
+
+**Loading State**:
+- Show "Loading..." text (or skeleton if complex)
+- Disable form inputs
+- Show subtle spinner or pulse animation (optional)
+
+**Error State**:
+- Red text below the field
+- (Optional) Red border on input
+- Show error icon or message
+- Don't clear input value
+
+**Empty State**:
+- Centered message with icon
+- Optional action button
+- Larger heading + description
+
+**Success State**:
+- Green checkmark or icon
+- Green "Success" message
+- Auto-dismiss after 3 seconds (optional)
+
+## Responsive Behavior
+
+### Breakpoints
+
+| Device | Width | Columns | Font | Changes |
+|--------|-------|---------|------|---------|
+| Mobile | 375px | 1 | 16px | Stack everything |
+| Tablet | 768px | 2-3 | 16px | Two-column grid |
+| Desktop | 1024px+ | 3-4 | 16px | Full grid, wider gaps |
+
+### Rules
+
+- **Mobile First**: Design for mobile, add complexity on tablet/desktop
+- **Touch Targets**: Minimum 44px × 44px (12px text + padding)
+- **Text Width**: Max 65 characters per line for readability
+- **Images**: Scale proportionally; use responsive width
+- **Modals**: Full screen on mobile, centered on desktop
+
+### Example
+
+```tsx
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {items.map(item => <Card key={item.id}>{item}</Card>)}
+</div>
+```
+
+## Accessibility
+
+### Color Contrast
+
+- Body text: Minimum 4.5:1 ratio (WCAG AA)
+- Large text (18px+): Minimum 3:1 ratio
+- **Our palette**: All primary/secondary combinations meet AA
+
+### Focus States
+
+- All interactive elements (buttons, inputs, links) must have visible focus
+- Focus ring: 2px blue outline, 2px offset
+- Never remove focus ring; always visible
+- Test with Tab key navigation
+
+### Keyboard Navigation
+
+- All actions available via keyboard
+- Tab through logical order (left-to-right, top-to-bottom)
+- Enter/Space to activate buttons
+- Arrow keys in lists/selects (if applicable)
+
+### Semantic HTML
+
+- Use `<button>` for actions (not `<div onClick>`)
+- Use `<label htmlFor="id">` for form fields
+- Use heading hierarchy: `<h1>`, `<h2>`, `<h3>` (never skip levels)
+- Use `<input type="email">`, `<input type="password">`, etc.
+
+### ARIA Labels
+
+- Add `aria-label` to icon buttons (e.g., "Delete project")
+- Add `aria-describedby` to inputs with help text
+- Use `role="alert"` for error messages that appear dynamically
+
+## Do's and Don'ts
+
+### ✅ DO
+
+- Use design tokens (don't hardcode colors/sizes)
+- Follow the 8px grid
+- Keep spacing consistent
+- Test on mobile, tablet, desktop
+- Use semantic HTML
+- Add focus rings to interactive elements
+- Keep information density moderate
+- Use color meaningfully (primary = action, red = error)
+- Test with keyboard navigation
+
+### ❌ DON'T
+
+- Arbitrary sizes or spacing (not multiples of 8px)
+- Multiple primary colors in one view
+- Remove focus rings
+- Use color alone to convey meaning
+- Make interactive elements smaller than 44px × 44px
+- Nest cards too deeply
+- Use images as buttons (always use `<button>`)
+- Hardcode hex colors (always use Tailwind classes)
+- Forget error states (show validation feedback)
+- Forget loading states (disable buttons, show spinner)
+
+## Visual Examples
+
+### Good Visual Hierarchy ✅
+
+```
+[Large Blue Button] ← What user should do first
+
+Secondary action    ← Less important
+
+Cancel              ← Least important (gray)
+```
+
+### Poor Visual Hierarchy ❌
+
+```
+[Secondary action]  ← All same size, confusing
+[Delete]
+[Main action]
+```
+
+## Implementation Checklist
+
+Before marking a UI complete:
+
+- [ ] All text uses correct typography level (H1/H2/Body/Caption)
+- [ ] All spacing is 8px multiples
+- [ ] All colors use design tokens
+- [ ] All interactive elements have focus rings
+- [ ] Component matches desktop AND mobile AND tablet
+- [ ] Keyboard navigation works (Tab through page)
+- [ ] Error states handled and visible
+- [ ] Loading states handled (disabled inputs, spinner)
+- [ ] Empty states handled (message + optional action)
+- [ ] ARIA labels added to icon buttons
+- [ ] Semantic HTML used (button, label, input, etc.)
+- [ ] No hardcoded colors or sizes
+- [ ] Contrast ratio ≥ 4.5:1 for all text
+
+## Questions?
+
+If a design decision isn't documented here, ask before implementing. Visual direction should be intentional, not accidental.
