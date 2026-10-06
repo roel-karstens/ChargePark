@@ -45,8 +45,8 @@ export function MapView({
         15,
       );
 
-      // Add OpenStreetMap Greyscale (free, no API key required)
-      L.tileLayer('https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png', {
+      // Add OpenStreetMap tiles (standard, free, no API key)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
       }).addTo(leafletMapRef.current);
@@ -153,7 +153,10 @@ export function MapView({
     <div
       ref={mapRef}
       className="w-full h-full bg-gray-200 rounded-lg shadow-md"
-      style={{ minHeight: '400px' }}
+      style={{ 
+        minHeight: '400px',
+        filter: 'grayscale(90%)'  // Apply greyscale filter for clean aesthetic
+      }}
     />
   );
 }
